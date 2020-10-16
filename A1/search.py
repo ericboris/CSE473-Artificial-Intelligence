@@ -118,12 +118,53 @@ def depthFirstSearch(problem):
             if succ not in seen:
                 fringe.push((succ, path + [direction]))
     
-    
 
 def breadthFirstSearch(problem):
-    """Search the shallowest nodes in the search tree first."""
-    "*** TODO - YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    '''
+    Search the shallowest nodes in the search tree first.
+    '''
+    
+    # Let a node be composed of that node's 
+    # (row, col) coordinates and a list containing
+    # the directions followed to reach the node.
+    
+    # Let fringe be a queue holding the 
+    # nodes yet to be searched.
+    fringe = util.Queue()
+    
+    # Let seen be a set of all the coords 
+    # that have already been visited.
+    seen = set()
+    
+    # Let start be the starting node to search from 
+    # and push it to the fringe.
+    start = (problem.getStartState(), [])
+    fringe.push(start)
+    
+    # Search for the goal until it's found or until
+    # determining that one doesn't exist.
+    while not fringe.isEmpty():
+        # Let curr be the current coordinates 
+        # that are being searched and
+        # let path be the directions 
+        # followed from start to curr.
+        curr, path = fringe.pop()
+        
+        seen.add(curr)
+        
+        # Found the goal!
+        if problem.isGoalState(curr):
+            return path
+        
+        # Let successors be the neighbors 
+        # accessible from the current coords
+        successors = problem.getSuccessors(curr)
+        
+        # Add each of the successors to the fringe.
+        for succ, direction, _ in successors:
+            if succ not in seen:
+                fringe.push((succ, path + [direction]))
+
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
