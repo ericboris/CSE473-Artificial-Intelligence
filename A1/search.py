@@ -123,7 +123,6 @@ def breadthFirstSearch(problem):
     '''
     Search the shallowest nodes in the search tree first.
     '''
-    
     # Let a node be composed of that node's 
     # (row, col) coordinates and a list containing
     # the directions followed to reach the node.
@@ -167,9 +166,52 @@ def breadthFirstSearch(problem):
 
 
 def uniformCostSearch(problem):
-    """Search the node of least total cost first."""
-    "*** TODO - YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    '''
+    Search the node of least total cost first.
+    '''
+    # Let a node be composed of that 
+    # node's (row, col) coordinates,
+    # a list containing the directions followed to reach the node,
+    # and the cost to reach that node.
+    
+    # Let fringe be a priority queue holding the 
+    # nodes yet to be searched.
+    fringe = AI_Priority_Queue()
+    
+    # Let seen be a set of all the coords 
+    # that have already been visited.
+    seen = set()
+    
+    # Let start be the starting node to search from 
+    # and push it to the fringe.
+    start = (problem.getStartState(), [], 0)
+    fringe.insert(start, 0)
+    
+    # Search for the goal until it's found or until
+    # determining that one doesn't exist.
+    while True:
+        # Let curr be the current coordinates that are being searched,
+        # let path be the directions followed from start to curr,
+        # let cost be the cost to reach curr from start.
+        node, currCost = fringe.delete_min()
+        curr, path = node[0], node[1]
+        
+        seen.add(curr)
+        
+        # Found the goal!
+        if problem.isGoalState(curr):
+            return path
+        
+        # Let successors be the neighbors 
+        # accessible from the current coords
+        successors = problem.getSuccessors(curr)
+        
+        # Add each of the successors to the fringe.
+        for succ, direction, succCost in successors:
+            if succ not in seen:
+                cost = currCost + succCost
+                fringe.insert((succ, path + [direction], cost), cost)
+    
 
 def nullHeuristic(state, problem=None):
     """
@@ -179,9 +221,52 @@ def nullHeuristic(state, problem=None):
     return 0
 
 def aStarSearch(problem, heuristic=nullHeuristic):
-    """Search the node that has the lowest combined cost and heuristic first."""
-    "*** TODO - YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    '''
+    Search the node that has the lowest combined cost and heuristic first.
+    '''
+    # Let a node be composed of that 
+    # node's (row, col) coordinates,
+    # a list containing the directions followed to reach the node,
+    # and the cost to reach that node.
+    
+    # Let fringe be a priority queue holding the 
+    # nodes yet to be searched.
+    fringe = AI_Priority_Queue()
+    
+    # Let seen be a set of all the coords 
+    # that have already been visited.
+    seen = set()
+    
+    # Let start be the starting node to search from 
+    # and push it to the fringe.
+    start = (problem.getStartState(), [], 0)
+    fringe.insert(start, 0)
+    
+    # Search for the goal until it's found or until
+    # determining that one doesn't exist.
+    while True:
+        # Let curr be the current coordinates that are being searched,
+        # let path be the directions followed from start to curr,
+        # let cost be the cost to reach curr from start.
+        node, currCost = fringe.delete_min()
+        curr, path = node[0], node[1]
+        
+        seen.add(curr)
+        
+        # Found the goal!
+        if problem.isGoalState(curr):
+            return path
+        
+        # Let successors be the neighbors 
+        # accessible from the current coords
+        successors = problem.getSuccessors(curr)
+        
+        # Add each of the successors to the fringe.
+        for succ, direction, succCost in successors:
+            if succ not in seen:
+                cost = currCost + succCost
+                totalCost = cost + heuristic(succ, problem)
+                fringe.insert((succ, path + [direction], cost), totalCost)
 
 
 # Abbreviations
