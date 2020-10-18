@@ -85,14 +85,16 @@ def depthFirstSearch(problem):
     # nodes yet to be searched.
     fringe = util.Stack()
     
-    # Let seen be a set of all the coords 
-    # that have already been visited.
-    seen = set()
-    
     # Let start be the starting node to search from 
     # and push it to the fringe.
     start = (problem.getStartState(), [])
     fringe.push(start)
+    
+    # Let seen be a set of all the coords 
+    # that have already been visited.
+    # And add the starting coordinates to seen.
+    seen = set()
+    seen.add(start[0])
     
     # Search for the goal until it's found or until
     # determining that one doesn't exist.
@@ -102,8 +104,6 @@ def depthFirstSearch(problem):
         # let path be the directions 
         # followed from start to curr.
         curr, path = fringe.pop()
-        
-        seen.add(curr)
         
         # Found the goal!
         if problem.isGoalState(curr):
@@ -116,6 +116,7 @@ def depthFirstSearch(problem):
         # Add each of the successors to the fringe.
         for succ, direction, _ in successors:
             if succ not in seen:
+                seen.add(succ)
                 fringe.push((succ, path + [direction]))
     
 
@@ -131,14 +132,16 @@ def breadthFirstSearch(problem):
     # nodes yet to be searched.
     fringe = util.Queue()
     
-    # Let seen be a set of all the coords 
-    # that have already been visited.
-    seen = set()
-    
     # Let start be the starting node to search from 
     # and push it to the fringe.
     start = (problem.getStartState(), [])
     fringe.push(start)
+    
+    # Let seen be a set of all the coords 
+    # that have already been visited.
+    # And add the starting coordinates to seen.
+    seen = set()
+    seen.add(start[0])
     
     # Search for the goal until it's found or until
     # determining that one doesn't exist.
@@ -148,8 +151,6 @@ def breadthFirstSearch(problem):
         # let path be the directions 
         # followed from start to curr.
         curr, path = fringe.pop()
-        
-        seen.add(curr)
         
         # Found the goal!
         if problem.isGoalState(curr):
@@ -162,6 +163,7 @@ def breadthFirstSearch(problem):
         # Add each of the successors to the fringe.
         for succ, direction, _ in successors:
             if succ not in seen:
+                seen.add(succ)
                 fringe.push((succ, path + [direction]))
 
 
@@ -178,14 +180,16 @@ def uniformCostSearch(problem):
     # nodes yet to be searched.
     fringe = AI_Priority_Queue()
     
-    # Let seen be a set of all the coords 
-    # that have already been visited.
-    seen = set()
-    
     # Let start be the starting node to search from 
     # and push it to the fringe.
     start = (problem.getStartState(), [], 0)
     fringe.insert(start, 0)
+    
+    # Let seen be a set of all the coords 
+    # that have already been visited.
+    # And add the starting coordinates to seen.
+    seen = set()
+    seen.add(start[0])
     
     # Search for the goal until it's found or until
     # determining that one doesn't exist.
@@ -195,8 +199,6 @@ def uniformCostSearch(problem):
         # let cost be the cost to reach curr from start.
         node, currCost = fringe.delete_min()
         curr, path = node[0], node[1]
-        
-        seen.add(curr)
         
         # Found the goal!
         if problem.isGoalState(curr):
@@ -209,6 +211,7 @@ def uniformCostSearch(problem):
         # Add each of the successors to the fringe.
         for succ, direction, succCost in successors:
             if succ not in seen:
+                seen.add(succ)
                 cost = currCost + succCost
                 fringe.insert((succ, path + [direction], cost), cost)
     
@@ -233,14 +236,16 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     # nodes yet to be searched.
     fringe = AI_Priority_Queue()
     
-    # Let seen be a set of all the coords 
-    # that have already been visited.
-    seen = set()
-    
     # Let start be the starting node to search from 
     # and push it to the fringe.
     start = (problem.getStartState(), [], 0)
     fringe.insert(start, 0)
+    
+    # Let seen be a set of all the coords 
+    # that have already been visited.
+    # And add the starting coordinates to seen.
+    seen = set()
+    seen.add(start[0])
     
     # Search for the goal until it's found or until
     # determining that one doesn't exist.
@@ -250,8 +255,6 @@ def aStarSearch(problem, heuristic=nullHeuristic):
         # let cost be the cost to reach curr from start.
         node, currCost = fringe.delete_min()
         curr, path = node[0], node[1]
-        
-        seen.add(curr)
         
         # Found the goal!
         if problem.isGoalState(curr):
@@ -264,6 +267,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
         # Add each of the successors to the fringe.
         for succ, direction, succCost in successors:
             if succ not in seen:
+                seen.add(succ)                
                 cost = currCost + succCost
                 totalCost = cost + heuristic(succ, problem)
                 fringe.insert((succ, path + [direction], cost), totalCost)
