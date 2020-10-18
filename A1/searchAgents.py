@@ -530,6 +530,10 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
+    # We perform the same procedure as cornersHeuristic, 
+    # finding the shortest distance from one point to the nest,
+    # but with caching for better performance.
+    
     # Let curr represent pacman's current (x, y) position.
     curr, foodGrid = state
     
@@ -583,7 +587,6 @@ def foodHeuristic(state, problem):
         foodPositions.remove(food)
     
     return heuristic
-    
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -613,8 +616,11 @@ class ClosestDotSearchAgent(SearchAgent):
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
 
-        "*** TODO - YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # A* returns the shortest path between two points. 
+        # Since we already have a problem defined, and any 
+        # food is a goal, we can just use A* to find the
+        # shortes path.
+        return search.astar(problem)
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -647,8 +653,8 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         The state is Pacman's position. Fill this in with a goal test that will
         complete the problem definition.
         """
-        x,y = state
-
-        "*** TODO - YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # Since any food position is the goal,
+        # if the current state matches any food position
+        # the current state is a goal state.
+        return state in self.food.asList()
 
