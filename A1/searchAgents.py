@@ -286,8 +286,6 @@ class CornersProblem(search.SearchProblem):
                 print('Warning: no food in corner ' + str(corner))
         self._expanded = 0 # DO NOT CHANGE; Number of search nodes expanded
         
-        # TODO
-
     def getStartState(self):
         """
         Returns the start state (in your state space, not the full Pacman state
@@ -378,9 +376,36 @@ def cornersHeuristic(state, problem):
     """
     corners = problem.corners # These are the corner coordinates
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
-
-    "*** TODO - YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    
+    # We don't need to search if we're already at the goal state.
+    if problem.isGoalState(state):
+        return 0
+    
+    # Let curr be the current position of pacman on the board. 
+    # He'll move from his initial position given by state[0] 
+    # to the corners of the board.
+    # Let visitedCorners be a boolean tuple where the ith element 
+    # represents whether corner i has been visited or not. 
+    curr, visitedCorners = state[0], state[1]
+    
+    # Let unvisited corners be a list of (x, y) coordinate pairs
+    # of the unvisited on the board.
+    unvisitedCorners = [corners[i] for i, c in enumerate(visitedCorners) if c == False]
+    
+    # Let heuristic be the minimum estimation to reach all the
+    # corners from the initial position at curr.
+    heuristic = 0
+    
+    # For each of the unvisited corners uc find the corner nearest c to curr. 
+    # Move curr to c, remove c from unvisited corners, and repeat 
+    # until all the corners have been visited and the heuristic total summed. 
+    while unvisitedCorners:
+        distance, corner = min([(util.manhattanDistance(curr, uc), uc) for uc in unvisitedCorners])
+        heuristic += distance
+        curr = corner
+        unvisitedCorners.remove(corner)
+    
+    return heuristic
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
