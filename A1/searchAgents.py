@@ -530,28 +530,6 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    # Define a function to compute the shortest path between two points in the maze.
-    def shortestPath(p1, p2):
-        '''
-        Return the length of the shortest path between p1 and p2
-        '''
-        # Let gs be the current game state.
-        gs = problem.startingGameState
-        # Let psp be the search problem to pass to A*
-        psp = PositionSearchProblem(gs, start=p1, goal=p2, warn=False, visualize=False)
-        
-        return len(search.astar(psp))
-    
-    # Not Used. No speed up evident nor fewer states expanded 
-    # than from simpler key creation. 
-    # Define a function for creating unique dictionary keys.
-    def pair(a,  b):
-        '''
-        Cantor pairing function.
-        Return a unique integer by pairing a and b.
-        '''
-        return 1 / 2 * (a + b) * (a + b + 1) + b
-    
     # Let curr represent pacman's current (x, y) position.
     curr, foodGrid = state
     
@@ -592,8 +570,7 @@ def foodHeuristic(state, problem):
             # Compute the shortest distance between curr and fp
             # and store the results.
             else:
-                # distance, food = util.manhattanDistance(curr, fp), fp
-                distance, food = shortestPath(curr, fp), fp
+                distance, food = util.manhattanDistance(curr, fp), fp
                 problem.heuristicInfo[key] = (distance, food)
                 
             # Keep only the nearestFood and the distance between it and curr.
