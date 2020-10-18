@@ -386,7 +386,7 @@ def cornersHeuristic(state, problem):
     # to the corners of the board.
     # Let visitedCorners be a boolean tuple where the ith element 
     # represents whether corner i has been visited or not. 
-    curr, visitedCorners = state[0], state[1]
+    curr, visitedCorners = state
     
     # Let unvisited corners be a list of (x, y) coordinate pairs
     # of the unvisited on the board.
@@ -462,6 +462,39 @@ class FoodSearchProblem:
                 return 999999
             cost += 1
         return cost
+        
+    def populateHeuristicInfo(self, state, problem):
+        '''
+        Populate heuristicInfo with distance mappings between every pair of points.
+        '''
+        curr, foodGrid = state
+        
+        positions = [curr]
+        for fp in foodGrid.asList():
+            positions.append(fp)
+                    
+        # TODO key doesn't correctly map from curr to goal in the case that
+        # it was found as goal to curr. Need to design better key that is 
+        # invertible, i.e. p1 + p2 == p2 + p1    
+        n = len(positions)
+        for i in range(n):
+            for j in range(i + 1, n):
+                p1 = positions[i]
+                p2 = positions[j]
+                key = p1 + p2
+                self.heuristicInfo[key] = problem.mazeDistance(p1, p2, problem.startingGameState)
+        
+    def distance(self, gameState, p1, p2):
+        '''
+        Return the actual distance between points p1 and p2.
+        '''
+        problem = PositionSearchProblem(gameState, p1, p2)
+        l = len(search.bfs(problem))
+        return l
+        
+    def mazeDistance(self, point1, point2, gameState):
+        prob = PositionSearchProblem(gameState, start=point1, goal=point2, warn=False, visualize=False)
+        return len(search.bfs(prob))
 
 class AStarFoodSearchAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -497,9 +530,83 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access
     problem.heuristicInfo['wallCount']
     """
-    position, foodGrid = state
-    "*** TODO - YOUR CODE HERE ***"
-    return 0
+    # Define a function to compute the shortest path between two points in the maze.
+    def shortestPath(p1, p2):
+        '''
+        Return the length of the shortest path between p1 and p2
+        '''
+        # Let gs be the current game state.
+        gs = problem.startingGameState
+        # Let psp be the search problem to pass to A*
+        psp = PositionSearchProblem(gs, start=p1, goal=p2, warn=False, visualize=False)
+        
+        return len(search.astar(psp))
+    
+    # Not Used. No speed up evident nor fewer states expanded 
+    # than from simpler key creation. 
+    # Define a function for creating unique dictionary keys.
+    def pair(a,  b):
+        '''
+        Cantor pairing function.
+        Return a unique integer by pairing a and b.
+        '''
+        return 1 / 2 * (a + b) * (a + b + 1) + b
+    
+    # Let curr represent pacman's current (x, y) position.
+    curr, foodGrid = state
+    
+    # Let foodPositions be a list of (x, y) food positions.
+    foodPositions = foodGrid.asList()
+    
+    # We're done if there's no food.
+    if not foodPositions:
+        return 0
+    
+    # Let heuristic be the minimum chain distance to visit
+    # every food position from the starting position.
+    heuristic = 0
+    
+    # Find the nearest food position, move there, remove that food 
+    # from foodPositions, and repeat until there's no more food. 
+    while foodPositions:
+        # Find the nearest food.
+        # Let fp the (x, y) position of the current food.
+        for fp in foodPositions:
+            # To reduce the number of distance calculations,
+            # cache the results of each calculation in 
+            # heuristicInfo enable better retrieval time
+            # when repeating the same distance measurement. 
+            
+            # Let minDistance be the minium distance between curr and food.
+            # Let nearestFood be the (x, y) position 
+            # of the nearest food to curr in the maze.
+            minDistance, nearestFood = float('inf'), None
+            
+            # Let key be a unique key for accessing the distance
+            # between curr and fp from heuristicInfo
+            key = curr + fp
+            
+            # Access the cached distance if we computed it already.
+            if key in problem.heuristicInfo:
+                distance, food = problem.heuristicInfo[key]
+            # Compute the shortest distance between curr and fp
+            # and store the results.
+            else:
+                # distance, food = util.manhattanDistance(curr, fp), fp
+                distance, food = shortestPath(curr, fp), fp
+                problem.heuristicInfo[key] = (distance, food)
+                
+            # Keep only the nearestFood and the distance between it and curr.
+            if distance < minDistance:
+                minDistance, nearestFood = distance, food
+                
+        # Move to the nearest food position and remove it from the maze.
+        heuristic += minDistance
+        curr = nearestFood
+        foodPositions.remove(food)
+    
+    return heuristic
+    
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
