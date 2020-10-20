@@ -94,7 +94,7 @@ def depthFirstSearch(problem):
     # that have already been visited.
     # And add the starting coordinates to seen.
     seen = set()
-    seen.add(start[0])
+    #seen.add(start[0])
     
     # Search for the goal until it's found or until
     # determining that one doesn't exist.
@@ -104,6 +104,8 @@ def depthFirstSearch(problem):
         # let path be the directions 
         # followed from start to curr.
         curr, path = fringe.pop()
+        
+        seen.add(curr)
         
         # Found the goal!
         if problem.isGoalState(curr):
@@ -116,8 +118,9 @@ def depthFirstSearch(problem):
         # Add each of the successors to the fringe.
         for succ, direction, _ in successors:
             if succ not in seen:
-                seen.add(succ)
                 fringe.push((succ, path + [direction]))
+    
+    return None
     
 
 def breadthFirstSearch(problem):
@@ -189,7 +192,7 @@ def uniformCostSearch(problem):
     # that have already been visited.
     # And add the starting coordinates to seen.
     seen = set()
-    seen.add(start[0])
+    ##seen.add(start[0])
     
     # Search for the goal until it's found or until
     # determining that one doesn't exist.
@@ -204,16 +207,18 @@ def uniformCostSearch(problem):
         if problem.isGoalState(curr):
             return path
         
-        # Let successors be the neighbors 
-        # accessible from the current coords
-        successors = problem.getSuccessors(curr)
-        
         # Add each of the successors to the fringe.
-        for succ, direction, succCost in successors:
-            if succ not in seen:
-                seen.add(succ)
-                cost = currCost + succCost
-                fringe.insert((succ, path + [direction], cost), cost)
+        if curr not in seen:
+            seen.add(curr)
+            
+            # Let successors be the neighbors 
+            # accessible from the current coords
+            successors = problem.getSuccessors(curr)
+            
+            for succ, direction, succCost in successors:
+                if succ not in seen:
+                    cost = currCost + succCost
+                    fringe.insert((succ, path + [direction], cost), cost)
     
 
 def nullHeuristic(state, problem=None):
@@ -245,33 +250,34 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     # that have already been visited.
     # And add the starting coordinates to seen.
     seen = set()
-    seen.add(start[0])
-    
+        
     # Search for the goal until it's found or until
     # determining that one doesn't exist.
     while True:
         # Let curr be the current coordinates that are being searched,
         # let path be the directions followed from start to curr,
-        # let cost be the cost to reach curr from start.
-        node, currCost = fringe.delete_min()
-        curr, path = node[0], node[1]
+        # let currCost be the cost to reach curr from start.
+        node, _ = fringe.delete_min()
+        curr, path, currCost = node[0], node[1], node[2]
         
         # Found the goal!
         if problem.isGoalState(curr):
             return path
         
-        # Let successors be the neighbors 
-        # accessible from the current coords
-        successors = problem.getSuccessors(curr)
+        if curr not in seen:
+            seen.add(curr)
+            
+            # Let successors be the neighbors 
+            # accessible from the current coords
+            successors = problem.getSuccessors(curr)
         
-        # Add each of the successors to the fringe.
-        for succ, direction, succCost in successors:
-            if succ not in seen:
-                seen.add(succ)                
-                cost = currCost + succCost
-                totalCost = cost + heuristic(succ, problem)
-                fringe.insert((succ, path + [direction], cost), totalCost)
-
+            # Add each of the successors to the fringe.
+            for succ, direction, succCost in successors:
+                if succ not in seen:             
+                    cost = currCost + succCost
+                    totalCost = cost + heuristic(succ, problem)
+                    fringe.insert((succ, path + [direction], cost), totalCost)
+    
 
 # Abbreviations
 bfs = breadthFirstSearch
