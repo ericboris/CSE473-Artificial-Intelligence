@@ -37,13 +37,48 @@ PROBLEM_DESC=\
 #<COMMON_CODE>
 
 class State():
-  pass
+    def __init__(self, d):
+        self.d = d
+        self.illegals = [{"f", "c"}, {"c", "g"}]
 
+    def __eq__(self, other):
+        for val in ["L", "R"]:
+            if self.d[val] != other.d[val]: return False
+        return True
+    
+    """def __str__(self):
+        #TODO:"""
+
+    def __hash__(self):
+        return (self.__str__()).__hash__()
+
+    def copy(self):
+        news = State({})
+        for side in ["L", "R"]:
+            news.d[side] = set([e for e in self.d[side]])
+        return news
+
+    def can_move(self, source, dest, actors):
+        news = self.move(source, dest, actors)
+        return news.d["L"] not in self.illegals and news.d["R"] not in self.illegals
+
+    def move(self, source, dest, actors):
+        news = self.copy()
+        print("paramters: ", source, " ", dest, " ", actors)
+        for actor in actors:
+            news.d[source].remove(actor)
+            news.d[dest].add(actor)
+        return news
+        
 def goal_test(s):
-  pass
-
+    goalState = State({'L': set(), 'R': {'F', 'f', 'c', 'g'}})  
+    return s.d == goalState.d
 def goal_message(s):
-  return "You did it." # CHANGE THE MESSAGE
+  return "You did great!" # CHANGE THE MESSAGE
+
+def str_format(src, dst, actors):
+    return "Move " + str(actors) + " from " + src + " " + dst 
+
 
 class Operator:
   def __init__(self, name, precond, state_transf):
@@ -59,13 +94,17 @@ class Operator:
 #</COMMON_CODE>
 
 #<INITIAL_STATE>
-CREATE_INITIAL_STATE = lambda : None # FIX THIS
+INITIAL_DICT = {'L': {"F", "f", "g", "c"}, 'R': set()}
+CREATE_INITIAL_STATE = lambda : State(INITIAL_DICT) # FIX THIS
 #</INITIAL_STATE>
 
 #<OPERATORS>
+actions = [("L", "R", ["F", "c"]), ("L", "R", ["F", "f"]), ("L", "R", ["F", "g"]), ("L", "R", ["F"]), ("R", "L", ["F", "c"]),  ("R", "L", ["F", "f"]), ("R", "L", ["F", "g"]), ("R", "L", ["F"])]
 
-# OPERATORS =     # FIX THIS
-
+OPERATORS = [Operator(lambda s1 = src, d1=dst, a1=actors: str_format(s1,d1,a1),
+                      lambda s, s1 = src, d1=dst, a1=actors: s.can_move(s1, d1, a1),
+                      lambda s, s1 = src, d1=dst, a1=actors: s.move(s1, d1, a1) )
+            for (src, dst, actors) in actions] 
 #</OPERATORS>
 
 #<GOAL_TEST> (optional)
