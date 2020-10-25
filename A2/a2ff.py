@@ -83,17 +83,10 @@ class State():
     def move(self, actors, src, dst):
         newS = self.copy()
 
-        # TODO - found the bug
-        # by iterating actor we're allowing illegal states. 
-        # The following is currently permitted.
-        # Consider:         Left        Right
-        #                   {F,f,c,g}   {}
-        # o({F,c},L,R)      {f,g}       {F,c}
-        # o({F,g},L,R)      {f}         {F,c,g}
-        # o({F,f},L,R)      {}          {F,f,c,g}
-        
-        for actor in actors:
-            if actor in newS.banks[src]:
+        # Only move actors from src to dst if all the actors
+        # are currently on the src bank.
+        if all([a in newS.banks[src] for a in actors]):
+            for actor in actors:
                 newS.banks[src].remove(actor)
                 newS.banks[dst].add(actor)
                 
