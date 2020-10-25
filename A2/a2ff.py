@@ -25,7 +25,7 @@ PROBLEM_CREATION_DATE = '22-OCT-2020'
 # The following field is mainly for the human solver, via either the Text_SOLUZION_Client.
 # or the SVG graphics client.
 PROBLEM_DESC=\
- '''The <b>'Farmer-Fox-Chicken-Grain'</b> problem is a traditional puzzle consisting of a Farmer, fox, chicken, and grain one bank of a river. The goal of the puzzle is to move all four to the other side, however, the Farmer can only take either the fox, chicken, or grain across at any one time and the Farmer cannot leave the fox alone with the chicken nor leave the chicken alone with the grain. In what order must the Farmer move each across the river?
+ '''The <b>'Farmer-Fox-Chicken-Grain'</b> problem is a traditional puzzle consisting of a Farmer, fox, chicken, and grain one bank of a river. The goal of the puzzle is to move all four to the other b, however, the Farmer can only take either the fox, chicken, or grain across at any one time and the Farmer cannot leave the fox alone with the chicken nor leave the chicken alone with the grain. In what order must the Farmer move each across the river?
 '''
 #</METADATA>
 
@@ -43,13 +43,13 @@ class State():
         self.banks = banks
 
     def __eq__(self, other):
-        return all([self.banks[side] == other.banks[side] for side in ('L', 'R')])
+        return all([self.banks[b] == other.banks[b] for b in ('L', 'R')])
     
     def __str__(self):
-        actors = {'F': 'Farmer', 'f': 'fox', 'c': 'chicken', 'g': 'grain'}
+        actorMap = {'F': 'Farmer', 'f': 'fox', 'c': 'chicken', 'g': 'grain'}
         if self.banks['L']:
             leftBank = 'The '
-            leftBank += ' and '.join([actors[key] for key in self.banks['L']])
+            leftBank += ' and '.join([actorMap[b] for b in self.banks['L']])
             if len(self.banks['L']) == 1:
                 leftBank += ' is'
             else:
@@ -59,7 +59,7 @@ class State():
             
         if self.banks['R']:
             rightBank = ' the '
-            rightBank += ' and '.join([actors[key] for key in self.banks['R']])
+            rightBank += ' and '.join([actorMap[b] for b in self.banks['R']])
             if len(self.banks['R']) == 1:
                 rightBank += ' is'
             else:
@@ -67,7 +67,7 @@ class State():
         else:
             rightBank = ' no one is'
             
-        return leftBank + ' on the left bank while' + rightBank + ' on the right bank.\n'
+        return leftBank + ' on the left bank and' + rightBank + ' on the right bank.\n'
         
     def __hash__(self):
         return (self.__str__()).__hash__()
@@ -75,20 +75,19 @@ class State():
     def copy(self):
         newS = State({})
         
-        for side in ('L', 'R'):
-            newS.banks[side] = set([actor for actor in self.banks[side]])
+        for b in ('L', 'R'):
+            newS.banks[b] = set([actor for actor in self.banks[b]])
             
         return newS
 
     def can_move(self, actors, src, dst):
         newS = self.move(actors, src, dst)
         illegalStates = ({'f', 'c'}, {'c', 'g'}, {'f', 'c', 'g'})
-        
-        return all([newS.banks[side] not in illegalStates for side in ('L', 'R')])
+        return all([newS.banks[b] not in illegalStates for b in ('L', 'R')])
 
     def move(self, actors, src, dst):
         newS = self.copy()
-        
+
         for actor in actors:
             if actor in newS.banks[src]:
                 newS.banks[src].remove(actor)
@@ -102,10 +101,12 @@ def goal_test(s):
     return s.banks == goal.banks
     
 def goal_message(s):
-    return 'You did great!' # CHANGE THE MESSAGE
+    return 'The Farmer, fox, chicken, and grain are all across the river!'
 
 def str_format(actors, src, dst):
-    return 'Move ' + str(actors) + ' from ' + src + ' ' + dst 
+    actorMap = {'F': 'Farmer', 'f': 'fox', 'c': 'chicken', 'g': 'grain'}
+    actorString = ' and '.join([actorMap[a] for a in actors])
+    return 'Move ' + actorString + ' from ' + src + ' to ' + dst + '.'
 
 
 class Operator:
@@ -127,18 +128,18 @@ CREATE_INITIAL_STATE = lambda : State(INITIAL_DICT)
 #</INITIAL_STATE>
 
 #<OPERATORS>
-actions = ((['F'], 'L', 'R'),
+actions = ((['F'],      'L', 'R'),
            (['F', 'f'], 'L', 'R'),
            (['F', 'c'], 'L', 'R'), 
            (['F', 'g'], 'L', 'R'), 
-           (['F'], 'R', 'L'),
+           (['F'],      'R', 'L'),
            (['F', 'f'], 'R', 'L'),
            (['F', 'c'], 'R', 'L'),  
            (['F', 'g'], 'R', 'L'))
 
-OPERATORS = [Operator(lambda a=actors, s=src, d=dst : str_format(a, s, d),
+OPERATORS = [Operator(str_format(actors, src, dst),
                       lambda state, a=actors, s=src, d=dst : state.can_move(a, s, d),
-                      lambda state, a=actors, s=src, d=dst: state.move(a, s, d))
+                      lambda state, a=actors, s=src, d=dst : state.move(a, s, d))
             for (actors, src, dst) in actions] 
 #</OPERATORS>
 
