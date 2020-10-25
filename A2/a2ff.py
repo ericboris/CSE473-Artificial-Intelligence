@@ -16,18 +16,16 @@ the Farmer, Fox, Chicken, and Grain.
 # the format shown.
 
 #<METADATA>
-SOLUZION_VERSION = "2.0"
-PROBLEM_NAME = "Farmer-Fox-Chicken-Grain"
-PROBLEM_VERSION = "1.0"
+SOLUZION_VERSION = '2.0'
+PROBLEM_NAME = 'Farmer-Fox-Chicken-Grain'
+PROBLEM_VERSION = '1.0'
 PROBLEM_AUTHORS = ['T. Nguyen', 'J.N. Smith']
-PROBLEM_CREATION_DATE = "22-OCT-2020"
+PROBLEM_CREATION_DATE = '22-OCT-2020'
 
 # The following field is mainly for the human solver, via either the Text_SOLUZION_Client.
 # or the SVG graphics client.
 PROBLEM_DESC=\
- '''The <b>"Farmer-Fox-Chicken-Grain"</b> problem is a traditional puzzle
-(add description).
-
+ '''The <b>'Farmer-Fox-Chicken-Grain'</b> problem is a traditional puzzle consisting of a Farmer, fox, chicken, and grain one bank of a river. The goal of the puzzle is to move all four to the other side, however, the Farmer can only take either the fox, chicken, or grain across at any one time and the Farmer cannot leave the fox alone with the chicken nor leave the chicken alone with the grain. In what order must the Farmer move each across the river?
 '''
 #</METADATA>
 
@@ -39,45 +37,47 @@ PROBLEM_DESC=\
 class State():
     def __init__(self, d):
         self.d = d
-        self.illegals = [{"f", "c"}, {"c", "g"}]
+        self.illegals = [{'f', 'c'}, {'c', 'g'}]
 
     def __eq__(self, other):
-        for val in ["L", "R"]:
+        for val in ['L', 'R']:
             if self.d[val] != other.d[val]: return False
         return True
     
-    """def __str__(self):
-        #TODO:"""
+    '''def __str__(self):
+        #TODO:'''
 
     def __hash__(self):
         return (self.__str__()).__hash__()
 
     def copy(self):
         news = State({})
-        for side in ["L", "R"]:
+        for side in ['L', 'R']:
             news.d[side] = set([e for e in self.d[side]])
         return news
 
     def can_move(self, source, dest, actors):
         news = self.move(source, dest, actors)
-        return news.d["L"] not in self.illegals and news.d["R"] not in self.illegals
+        return news.d['L'] not in self.illegals and news.d['R'] not in self.illegals
 
     def move(self, source, dest, actors):
         news = self.copy()
-        print("paramters: ", source, " ", dest, " ", actors)
+        #print('paramters: s:', source, ' d:', dest, ' a:', actors)
         for actor in actors:
-            news.d[source].remove(actor)
-            news.d[dest].add(actor)
+            if actor in news.d[source]:
+                news.d[source].remove(actor)
+                news.d[dest].add(actor)
         return news
         
 def goal_test(s):
     goalState = State({'L': set(), 'R': {'F', 'f', 'c', 'g'}})  
     return s.d == goalState.d
+    
 def goal_message(s):
-  return "You did great!" # CHANGE THE MESSAGE
+  return 'You did great!' # CHANGE THE MESSAGE
 
 def str_format(src, dst, actors):
-    return "Move " + str(actors) + " from " + src + " " + dst 
+    return 'Move ' + str(actors) + ' from ' + src + ' ' + dst 
 
 
 class Operator:
@@ -94,12 +94,19 @@ class Operator:
 #</COMMON_CODE>
 
 #<INITIAL_STATE>
-INITIAL_DICT = {'L': {"F", "f", "g", "c"}, 'R': set()}
-CREATE_INITIAL_STATE = lambda : State(INITIAL_DICT) # FIX THIS
+INITIAL_DICT = {'L': {'F', 'f', 'g', 'c'}, 'R': set()}
+CREATE_INITIAL_STATE = lambda : State(INITIAL_DICT) # TODO FIX THIS
 #</INITIAL_STATE>
 
 #<OPERATORS>
-actions = [("L", "R", ["F", "c"]), ("L", "R", ["F", "f"]), ("L", "R", ["F", "g"]), ("L", "R", ["F"]), ("R", "L", ["F", "c"]),  ("R", "L", ["F", "f"]), ("R", "L", ["F", "g"]), ("R", "L", ["F"])]
+actions = [('L', 'R', ['F']),
+           ('L', 'R', ['F', 'f']),
+           ('L', 'R', ['F', 'c']), 
+           ('L', 'R', ['F', 'g']), 
+           ('R', 'L', ['F']),
+           ('R', 'L', ['F', 'f']),
+           ('R', 'L', ['F', 'c']),  
+           ('R', 'L', ['F', 'g'])]
 
 OPERATORS = [Operator(lambda s1 = src, d1=dst, a1=actors: str_format(s1,d1,a1),
                       lambda s, s1 = src, d1=dst, a1=actors: s.can_move(s1, d1, a1),
