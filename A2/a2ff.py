@@ -32,6 +32,11 @@ PROBLEM_DESC=\
 #<COMMON_DATA>
 #</COMMON_DATA>
 
+# TODO - test for correctness
+#        I think right now something is off and we're skipping states. 
+#        Consider the current output. 
+# TODO - comment code
+
 #<COMMON_CODE>
 class State():    
     def __init__(self, banks):
@@ -69,21 +74,26 @@ class State():
 
     def copy(self):
         newS = State({})
+        
         for side in ('L', 'R'):
             newS.banks[side] = set([actor for actor in self.banks[side]])
+            
         return newS
 
     def can_move(self, actors, src, dst):
         newS = self.move(actors, src, dst)
         illegalStates = ({'f', 'c'}, {'c', 'g'}, {'f', 'c', 'g'})
+        
         return all([newS.banks[side] not in illegalStates for side in ('L', 'R')])
 
     def move(self, actors, src, dst):
         newS = self.copy()
+        
         for actor in actors:
             if actor in newS.banks[src]:
                 newS.banks[src].remove(actor)
                 newS.banks[dst].add(actor)
+                
         return newS
         
         
