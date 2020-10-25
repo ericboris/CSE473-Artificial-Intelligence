@@ -1,7 +1,7 @@
 '''a2ff.py
-by Terry Nguyen and John Nathan Smith
-UWNetIDs: ternguyen5,  jnsmith98
-Student numbers: 1820381, and 1742903
+by Eric Boris and Rahul Ram
+UWNetIDs: eboris91,  TODO
+Student numbers: 1976637, and TODO
 
 Assignment 2, in CSE 473, Autumn 2020.
 
@@ -19,7 +19,7 @@ the Farmer, Fox, Chicken, and Grain.
 SOLUZION_VERSION = '2.0'
 PROBLEM_NAME = 'Farmer-Fox-Chicken-Grain'
 PROBLEM_VERSION = '1.0'
-PROBLEM_AUTHORS = ['T. Nguyen', 'J.N. Smith']
+PROBLEM_AUTHORS = ['E. Boris', 'R. Ram']
 PROBLEM_CREATION_DATE = '22-OCT-2020'
 
 # The following field is mainly for the human solver, via either the Text_SOLUZION_Client.
@@ -33,50 +33,62 @@ PROBLEM_DESC=\
 #</COMMON_DATA>
 
 #<COMMON_CODE>
-
-class State():
-    def __init__(self, d):
-        self.d = d
-        self.illegals = [{'f', 'c'}, {'c', 'g'}]
+class State():    
+    def __init__(self, banks):
+        self.banks = banks
 
     def __eq__(self, other):
-        for val in ['L', 'R']:
-            if self.d[val] != other.d[val]: return False
-        return True
+        return all([self.banks[side] == other.banks[side] for side in ('L', 'R')])
     
-    '''def __str__(self):
-        #TODO:'''
-
+    def __str__(self):
+        actors = {'F': 'Farmer', 'f': 'fox', 'c': 'chicken', 'g': 'grain'}
+        if self.banks['L']:
+            leftBank = 'The '
+            leftBank += ' and '.join([actors[key] for key in self.banks['L']])
+            leftBank += ' are'
+        else: 
+            leftBank = 'No one is'
+            
+        if self.banks['R']:
+            rightBank = ' the '
+            rightBank += ' and '.join([actors[key] for key in self.banks['R']])
+            rightBank += ' are'
+        else:
+            rightBank = ' no one is'
+            
+        return leftBank + ' on the left bank while' + rightBank + ' on the right bank.\n'
+        
     def __hash__(self):
         return (self.__str__()).__hash__()
 
     def copy(self):
-        news = State({})
-        for side in ['L', 'R']:
-            news.d[side] = set([e for e in self.d[side]])
-        return news
+        newS = State({})
+        for side in ('L', 'R'):
+            newS.banks[side] = set([actor for actor in self.banks[side]])
+        return newS
 
-    def can_move(self, source, dest, actors):
-        news = self.move(source, dest, actors)
-        return news.d['L'] not in self.illegals and news.d['R'] not in self.illegals
+    def can_move(self, actors, src, dst):
+        newS = self.move(actors, src, dst)
+        illegalStates = ({'f', 'c'}, {'c', 'g'})
+        return all([newS.banks[side] not in illegalStates for side in ('L', 'R')])
 
-    def move(self, source, dest, actors):
-        news = self.copy()
-        #print('paramters: s:', source, ' d:', dest, ' a:', actors)
+    def move(self, actors, src, dst):
+        newS = self.copy()
         for actor in actors:
-            if actor in news.d[source]:
-                news.d[source].remove(actor)
-                news.d[dest].add(actor)
-        return news
+            if actor in newS.banks[src]:
+                newS.banks[src].remove(actor)
+                newS.banks[dst].add(actor)
+        return newS
+        
         
 def goal_test(s):
-    goalState = State({'L': set(), 'R': {'F', 'f', 'c', 'g'}})  
-    return s.d == goalState.d
+    goal = State({'L': set(), 'R': {'F', 'f', 'c', 'g'}})  
+    return s.banks == goal.banks
     
 def goal_message(s):
-  return 'You did great!' # CHANGE THE MESSAGE
+    return 'You did great!' # CHANGE THE MESSAGE
 
-def str_format(src, dst, actors):
+def str_format(actors, src, dst):
     return 'Move ' + str(actors) + ' from ' + src + ' ' + dst 
 
 
@@ -95,23 +107,23 @@ class Operator:
 
 #<INITIAL_STATE>
 INITIAL_DICT = {'L': {'F', 'f', 'g', 'c'}, 'R': set()}
-CREATE_INITIAL_STATE = lambda : State(INITIAL_DICT) # TODO FIX THIS
+CREATE_INITIAL_STATE = lambda : State(INITIAL_DICT)
 #</INITIAL_STATE>
 
 #<OPERATORS>
-actions = [('L', 'R', ['F']),
-           ('L', 'R', ['F', 'f']),
-           ('L', 'R', ['F', 'c']), 
-           ('L', 'R', ['F', 'g']), 
-           ('R', 'L', ['F']),
-           ('R', 'L', ['F', 'f']),
-           ('R', 'L', ['F', 'c']),  
-           ('R', 'L', ['F', 'g'])]
+actions = ((['F'], 'L', 'R'),
+           (['F', 'f'], 'L', 'R'),
+           (['F', 'c'], 'L', 'R'), 
+           (['F', 'g'], 'L', 'R'), 
+           (['F'], 'R', 'L'),
+           (['F', 'f'], 'R', 'L'),
+           (['F', 'c'], 'R', 'L'),  
+           (['F', 'g'], 'R', 'L'))
 
-OPERATORS = [Operator(lambda s1 = src, d1=dst, a1=actors: str_format(s1,d1,a1),
-                      lambda s, s1 = src, d1=dst, a1=actors: s.can_move(s1, d1, a1),
-                      lambda s, s1 = src, d1=dst, a1=actors: s.move(s1, d1, a1) )
-            for (src, dst, actors) in actions] 
+OPERATORS = [Operator(lambda a=actors, s=src, d=dst : str_format(a, s, d),
+                      lambda state, a=actors, s=src, d=dst : state.can_move(a, s, d),
+                      lambda state, a=actors, s=src, d=dst: state.move(a, s, d))
+            for (actors, src, dst) in actions] 
 #</OPERATORS>
 
 #<GOAL_TEST> (optional)
