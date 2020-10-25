@@ -45,14 +45,20 @@ class State():
         if self.banks['L']:
             leftBank = 'The '
             leftBank += ' and '.join([actors[key] for key in self.banks['L']])
-            leftBank += ' are'
+            if len(self.banks['L']) == 1:
+                leftBank += ' is'
+            else:
+                leftBank += ' are'
         else: 
             leftBank = 'No one is'
             
         if self.banks['R']:
             rightBank = ' the '
             rightBank += ' and '.join([actors[key] for key in self.banks['R']])
-            rightBank += ' are'
+            if len(self.banks['R']) == 1:
+                rightBank += ' is'
+            else:
+                rightBank += ' are'
         else:
             rightBank = ' no one is'
             
@@ -69,7 +75,7 @@ class State():
 
     def can_move(self, actors, src, dst):
         newS = self.move(actors, src, dst)
-        illegalStates = ({'f', 'c'}, {'c', 'g'})
+        illegalStates = ({'f', 'c'}, {'c', 'g'}, {'f', 'c', 'g'})
         return all([newS.banks[side] not in illegalStates for side in ('L', 'R')])
 
     def move(self, actors, src, dst):
