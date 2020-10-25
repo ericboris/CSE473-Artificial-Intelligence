@@ -101,7 +101,7 @@ def goal_test(s):
 def goal_message(s):
     return 'The Farmer, fox, chicken, and grain are all across the river!'
 
-def str_format(actors, src, dst):
+def get_name(actors, src, dst):
     actorMap = {'F': 'Farmer', 'f': 'fox', 'c': 'chicken', 'g': 'grain'}
     actorString = ' and '.join([actorMap[a] for a in actors])
     return 'Move ' + actorString + ' from ' + src + ' to ' + dst + '.'
@@ -135,7 +135,7 @@ actions = ((['F'],      'L', 'R'),
            (['F', 'c'], 'R', 'L'),  
            (['F', 'g'], 'R', 'L'))
 
-OPERATORS = [Operator(str_format(actors, src, dst),
+OPERATORS = [Operator(get_name(actors, src, dst),
                       lambda state, a=actors, s=src, d=dst : state.can_move(a, s, d),
                       lambda state, a=actors, s=src, d=dst : state.move(a, s, d))
             for (actors, src, dst) in actions] 
