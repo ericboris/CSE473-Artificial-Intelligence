@@ -30,9 +30,6 @@ PROBLEM_DESC=\
 #<COMMON_DATA>
 #</COMMON_DATA>
 
-# TODO - test for correctness
-#        I think right now something is off and we're skipping states. 
-#        Consider the current output. 
 # TODO - comment code
 
 #<COMMON_CODE>
@@ -86,6 +83,15 @@ class State():
     def move(self, actors, src, dst):
         newS = self.copy()
 
+        # TODO - found the bug
+        # by iterating actor we're allowing illegal states. 
+        # The following is currently permitted.
+        # Consider:         Left        Right
+        #                   {F,f,c,g}   {}
+        # o({F,c},L,R)      {f,g}       {F,c}
+        # o({F,g},L,R)      {f}         {F,c,g}
+        # o({F,f},L,R)      {}          {F,f,c,g}
+        
         for actor in actors:
             if actor in newS.banks[src]:
                 newS.banks[src].remove(actor)
