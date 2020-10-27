@@ -1,7 +1,7 @@
 '''a2wp.py
 by Eric Boris and TODO
-UWNetIDs: eboris91,  jnsmith98
-Student numbers: 1976637, and 1742903
+UWNetIDs: eboris91, TODO
+Student numbers: 1976637, and TODO
 
 Assignment 2, in CSE 473, Autumn 2020.
 PART B
@@ -119,7 +119,6 @@ class Operator:
 
 #<INITIAL_STATE>
 MIN_GDP = 1000
-
 NUM_FEATURES = 7
 
 # Let MAX_FUNDS be the total amount of money to fund the economy with at the
@@ -131,7 +130,7 @@ INIT_DECAY = [0.8, 0.9, 0.95]
 INIT_DELAY = [1, 3, 5]
 INIT_FUNDS = [100]
 INIT_MOVES = [10]
-INIT_RETURNS = [0] * (INIT_MOVES + INIT_DELAY[-1])
+INIT_RETURNS = [0] * (INIT_MOVES + INIT_DELAY[-1]]
 
 # Let the following constants be the indices where their respective features can
 # be accessed in the feaures list.
