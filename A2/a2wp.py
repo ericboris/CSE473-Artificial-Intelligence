@@ -40,6 +40,20 @@ maintained above this threshold for the predetermined amount of time for success
 
 #<COMMON_CODE>
 
+# TODO - I made mention below of representing the delay in effectiveness of each
+# each of the financial polices, namely that AS is faster than MP is faster than
+# FP, despite the fact that FP is more effective than MP is more effective than AP. 
+# I think we should represent these efficacies as a list of values, we'll call it d. 
+# So, let's say we have 10 moves, then initialize d = [0] * moves. 
+# Now, if use a turn to distribute funds to AS, then the funds go to d[i + x] where
+# i is the current move and x is some positive integer.
+# If we distribute funds to MP, the funds go to d[i + y] where y is > x.
+# And funds to FP got to d[i + z] where z > y. 
+# Then, when calculating GDP on a given move i, we access the funds in d[i] as 
+# part of that calculation.
+# In this way we can capture the effect that yes, the funds might be more effective
+# given to FP but that effect will take longer to be realized. 
+
 class State():
 	def __init__(self, distributions: List(int)):
 		# Let distributions[0] be the amount currently in automatic stabilizers,
@@ -135,7 +149,17 @@ CREATE_INITIAL_STATE = lambda : None # FIX THIS
 
 #<OPERATORS>
 
-# OPERATORS =     # FIX THIS
+# We'll merge actors and funds into a list of tuples called actions.
+# Let actions be of the form [(actors[0], funds[0]), (actors[0], funds[1]), ... (actors[2], funds[n])]
+# where n is the length of funds. 
+actors = ['A', 'M', 'F']
+funds = [f for f in range(0, 1000, 10)]
+actions = [a + str(f) for a in actors for f in funds]
+
+OPERATORS = [Operator(get_name(actor, fund),
+					  lambda state, a=actor, f=fund : state.can_fund(a, f),
+					  lambda state, a=actor, f=fund : state.fund(a, f))
+			 for (actor, fund) in actions]
 
 #</OPERATORS>
 
