@@ -15,7 +15,7 @@ This file contains our problem formulation for preventing a depression in the US
 
 #<METADATA>
 SOLUZION_VERSION = "2.0"
-PROBLEM_NAME = "Finding a COVID-19 Vaccine"
+PROBLEM_NAME = "Avoiding a Severe Economic Depression in the US"
 PROBLEM_VERSION = "1.0"
 PROBLEM_AUTHORS = ['E. Boris', 'TODO']
 PROBLEM_CREATION_DATE = "22-Oct-2020"
@@ -23,7 +23,7 @@ PROBLEM_CREATION_DATE = "22-Oct-2020"
 # The following field is mainly for the human solver, via either the Text_SOLUZION_Client.
 # or the SVG graphics client.
 PROBLEM_DESC=\
- '''The <b>"Avoiding a Severe Economic Depression in the US"</b> problem is
+ '''The <b>"Avoiding a Severe Economic Depression in the US"</b>
 is a wicked problem in which a country (the US) starts off in an economic state determined by:
 1. a GDP with funds distributed between three components: Auto Stablizers (As), Monetary Policies (Mp),
 and Fiscal Policies (Fp), 2. a predetermined amount of time steps over which to maintain economic 
@@ -36,12 +36,6 @@ maintained above this threshold for the predetermined amount of time for success
 #</METADATA>
 
 #<COMMON_DATA>
-# Let MAX_FUNDS be the total amount of money to fund the economy with at the
-# start of the formulation. We define a constant here since the value it 
-# represents is used in more than one place.
-MAX_FUNDS = 100
-MAX_MOVES = 10
-
 #</COMMON_DATA>
 
 #<COMMON_CODE>
@@ -75,18 +69,22 @@ class State():
 					return False
 		return True
 	
-	# TODO update str to reflect the change to using a features list.
+	# TODO likely change self.getGDP call
 	def __str__(self):
 		''' Return a string representation of the current state.'''
-		aS, mP, fP = self.features
-		txt = "The minimum GDP is " + str(self.minGDP)
-		txt += " and the current GDP is " + str(self.GDP)
+		aS, mP, fP = self.features[ACTORS_IDX]
+		txt = "The minimum GDP is " + MIN_GDP
+		txt += " and the current GDP is " + str(self.getGDP())
 		txt += " with " + str(aS) + " in automatic stabilizers "
 		txt += " and " + str(mP) + " in monetary policy "
 		txt += " and " + str(fP) + " in financial policy. "
-		txt += "There are " + str(self.totalFunds) + " funds remaining "
-		txt += " and " + str(self.movesRemaining) + " moves remaining."
+		txt += "There are " + str(self.features[FUNDS_IDX]) + " funds remaining "
+		txt += " and " + str(self.features[MOVES_IDX]) + " moves remaining."
 		return txt				
+
+	def __hash__(self):
+		''' Return the hash of this state.'''
+		return (self.__str__()).__hash__()
 
 	def copy(self):
 		''' Return a deep copy of the current state.'''
@@ -97,17 +95,19 @@ class State():
 			newS.features[feat] = self.features[feat][:]
 		return newS
 		
-
+	# TODO - Implement
 	def can_alloc(self, actor, fund):
 		''' Return True if allocating the amount of funds in fund to actor
 			does not cause a depression and there are moves remaining,
 			otherwise, return False.'''
 		pass
 
+	# TODO - Implement
 	def alloc(self, actor, fund):
 		''' Allocate the amount of funding in fund to the actor.'''
 		pass
 
+# TODO - Implement
 def goal_test(s):
   pass
 
@@ -132,7 +132,32 @@ class Operator:
 #</COMMON_CODE>
 
 #<INITIAL_STATE>
-# Let INITIAL_FEATURES represent the features of the starting state of the economy. 
+MIN_GDP = 1000
+
+NUM_FEATURES = 7
+
+# Let MAX_FUNDS be the total amount of money to fund the economy with at the
+# start of the formulation. We define a constant here since the value it 
+# represents is used in more than one place.
+INIT_ACTORS = [10, 10, 10]
+INIT_WEIGHTS = [1.25, 1.5, 2.0]
+INIT_DECAY = [0.8, 0.9, 0.95]
+INIT_DELAY = [1, 3, 5]
+INIT_FUNDS = [100]
+INIT_MOVES = [10]
+INIT_RETURNS = [0] * (INIT_MOVES + INIT_DELAY[-1])
+
+# Let the following constants be the indices where their respective features can
+# be accessed in the feaures list.
+ACTORS_IDX = 0
+WEIGHTS_IDX = 1
+DECAY_IDX = 2
+DELAY_IDX = 3
+FUNDS_IDX = 4
+MOVES_IDX = 5
+RETURNS_IDX = 6
+
+# Let INIT_FEATURES represent the features of the starting state of the economy. 
 # The feature list should be of the following form:
 # I_F[0] represents the funds currently allocated to the 3 components (AS, MP, FP)
 # I_F[1] represents the weights funds allocated to the components have on GDP
@@ -140,15 +165,18 @@ class Operator:
 # I_F[3] represents the time delay for funds allocated to the components to affect GDP
 # I_F[4] represents the total funds available to allocate to the 3 components
 # I_F[5] represents the total number of actions over which stave off a depression
-# Note that each element in INITIAL_FUNDS is a list to simplify the copy function.
-INITIAL_FEATURES = [[10, 10, 10],
-					[1.25, 1.5, 2.0],
-					[0.8, 0.9, 0.95],
-					[1, 3, 5],
-					[MAX_FUNDS]
-					[MAX_MOVES]]
+# Note that each element in INITIAL_FUNDS is a list to simplify the copy and eq functions.
+INIT_FEATURES = [[]] * NUM_FEATURES
+INIT_FEATURES[ACTORS_IDX] = INIT_ACTORS
+INIT_FEATURES[WEIGHTS_IDX] = INIT_WEIGHTS
+INIT_FEATURES[DECAY_IDX] = INIT_DECAY
+INIT_FEATURES[DELAY_IDX] = INIT_DELAY
+INIT_FEATURES[FUNDS_IDX] = INIT_FUNDS
+INIT_FEATURES[FUNDS_IDX] = INIT_MOVES
+INIT_FEATURES[RETURNS_IDX] = INIT_RETURNS
+
 					
-CREATE_INITIAL_STATE = lambda : State(INITIAL_FEATURES)
+CREATE_INITIAL_STATE = lambda : State(INIT_FEATURES)
 #</INITIAL_STATE>
 
 #<OPERATORS>
@@ -157,7 +185,7 @@ CREATE_INITIAL_STATE = lambda : State(INITIAL_FEATURES)
 # Let actions be of the form [(actors[0], funds[0]), (actors[0], funds[1]), ... (actors[2], funds[n])]
 # where n is the length of funds. 
 actors = ['A', 'M', 'F']
-funds = [f for f in range(0, MAX_FUNDS, 5)]
+funds = [f for f in range(0, INIT_FUNDS, 5)]
 actions = [a + str(f) for a in actors for f in funds]
 
 OPERATORS = [Operator(get_name(actor, fund),
@@ -174,8 +202,3 @@ GOAL_TEST = lambda s: goal_test(s)
 #<GOAL_MESSAGE_FUNCTION> (optional)
 GOAL_MESSAGE_FUNCTION = lambda s: goal_message(s)
 #</GOAL_MESSAGE_FUNCTION>
-
-
-
-
-
