@@ -55,26 +55,24 @@ maintained above this threshold for the predetermined amount of time for success
 # given to FP but that effect will take longer to be realized. 
 
 class State():
-	def __init__(self, distributions: List(int)):
-		# Let distributions[0] be the amount currently in automatic stabilizers,
-		# let distributions[1] be the amount currently in monetary policy,
-		# let distributions[2] be the amount currently in financial policy.
-		self.distributions = distributions
-		self.totalFunds = totalFunds
-		self.movesRemaining = movesRemaining
-		self.minGDP = minGDP		
+	def __init__(self, features):
+		self.features = features
 
 	def __eq__(self, other):
-		''' Return True if self and other are the same length
-			and each value held in self and other are equal, 
-			otherwise return False.'''
-		if len(self.distributions) != len(other.distributions):
-			return False
-		return all([a == b for a, b in zip(self.distributions, other.distributions)])
-
+		''' Return True if self State and other State are equivalent,
+			and False otherwise.'''
+		n = len(self.features)
+		for feat in range(n):
+			m = len(feat)
+			for val in range(m):
+				if self.features[feat][val] != other.features[feat][val]:
+					return False
+		return True
+	
+	# TODO fix str
 	def __str__(self):
 		''' Return a string representation of the current state.'''
-		aS, mP, fP = self.distributions
+		aS, mP, fP = self.features
 		txt = "The minimum GDP is " + str(self.minGDP)
 		txt += " and the current GDP is " + str(self.GDP)
 		txt += " with " + str(aS) + " in automatic stabilizers "
@@ -84,51 +82,36 @@ class State():
 		txt += " and " + str(self.movesRemaining) + " moves remaining."
 		return txt				
 
-	def calculateGDP(self) -> int:
-		''' return some combination of values stored as autoStabilizer, 
-			monetaryPolicy, and financialPolicy'''
-		# Since these features are systemic, they should create feedback loops
-		# based on their values. We could represent these as each one's 
-		# value decreasing every time step (a result of inflation, perhaps?).
-		aS, mP, fP = self.distributions
-
-		# First pass on the idea mentioned above for decreasing each time step.
-		self.distributions = [aS * 0.8, mP * 0.9, fP * 0.95]
+	def copy(self):
+		''' Return a deep copy of the current state.'''
+		newS = State([])
+		n = len(self.features)
+		for feat in range(n):
+			newS.features.append([])
+			newS.features[feat] = self.features[feat][:]
+		return newS
 		
-		# TODO chage the return value to a more reasonable function.
-		return aS * 1.10 + mP * 1.20 + fP * 1.30  
-	
-	def autoStabilizer(amt: int) -> int:
-		''' return a contribution to the GDP based on a 
-			financial distribution made to auto stabilizers.'''
-		# TODO change the return value to something more reasonable. 
-		# Since AS has a faster response rate, we should work in some 
-		# way of representing that it has more immediate effects than MP or FP. 
-		return self.distributions[0] *= 1.25 
 
-	def monetaryPolicy(amt: int) -> int:
-		''' return a contribution to the GDP based on a 
-			financial distribution made to monetary policy.'''
-		# TODO change the return value to something reasonable.
-		# Since MP has a midrate response rate, we should work in some
-		# way of representing that it takes longer than AS but is 
-		# faster than FP. 
-		return self.distributions[1] *= 1.5
+	def can_alloc(self, actor, fund):
+		''' Return True if allocating the amount of funds in fund to actor
+			does not cause a depression and there are moves remaining,
+			otherwise, return False.'''
+		newS = self.fund(actor, fund)
+		if self.movesRemaining < 0
 
-	def financialPolicy(amt: int) -> int:
-		''' return a contribution to the GDP based on a 
-            financial distribution made to financial policy.'''
-        # TODO change the return value to something reasonable.
-        # Since FP has the longest response rate, we should work in some
-		# some way if representing that it takes longer to have it's
-		# effect than AS or MP.
-		return self.distributions[2] *= 2.0
+	def alloc(self, actor, fund):
+		''' Allocate the amount of funding in fund to the actor.'''
+		pass
 
 def goal_test(s):
   pass
 
 def goal_message(s):
   return "You prevented a severe depression!" #TODO incorporate the phrase 'depression for x number of days/weeks/months!'
+
+def get_name(actor, fund):
+	actorMap = {'A': 'Automatic Stabilizers', 'M': 'Monetary Policy', 'F': 'Fiscal Policy'}
+	return 'Allocate ' + str(fund) + ' in funding to ' + actorMap[actor] + '.'
 
 class Operator:
   def __init__(self, name, precond, state_transf):
@@ -144,7 +127,28 @@ class Operator:
 #</COMMON_CODE>
 
 #<INITIAL_STATE>
-CREATE_INITIAL_STATE = lambda : None # FIX THIS
+# Let MAX_FUNDS be the total amount of money to fund the economy with at the
+# start of the formulation. We define a constant here since the value it 
+# represents is used in more than one place.
+MAX_FUNDS = 100
+
+# Let INITIAL_FEATURES represent the features of the starting state of the economy. 
+# The feature list should be of the following form:
+# I_F[0] represents the funds currently allocated to the 3 components (AS, MP, FP)
+# I_F[1] represents the weights funds allocated to the components have on GDP
+# I_F[2] represents the amounts by which each of the components depreciates each move
+# I_F[3] represents the time delay for funds allocated to the components to affect GDP
+# I_F[4] represents the total funds available to allocate to the 3 components
+# I_F[5] represents the total number of actions over which stave off a depression
+# Note that each element in INITIAL_FUNDS is a list to simplify the copy function.
+INITIAL_FEATURES = [[10, 10, 10],
+					[1.25, 1.5, 2.0],
+					[0.8, 0.9, 0.95],
+					[1, 3, 5],
+					[MAX_FUNDS]
+					[10]]
+					
+CREATE_INITIAL_STATE = lambda : State(INITIAL_FEATURES)
 #</INITIAL_STATE>
 
 #<OPERATORS>
@@ -153,12 +157,12 @@ CREATE_INITIAL_STATE = lambda : None # FIX THIS
 # Let actions be of the form [(actors[0], funds[0]), (actors[0], funds[1]), ... (actors[2], funds[n])]
 # where n is the length of funds. 
 actors = ['A', 'M', 'F']
-funds = [f for f in range(0, 1000, 10)]
+funds = [f for f in range(0, MAX_FUNDS, 5)]
 actions = [a + str(f) for a in actors for f in funds]
 
 OPERATORS = [Operator(get_name(actor, fund),
-					  lambda state, a=actor, f=fund : state.can_fund(a, f),
-					  lambda state, a=actor, f=fund : state.fund(a, f))
+					  lambda state, a=actor, f=fund : state.can_alloc(a, f),
+					  lambda state, a=actor, f=fund : state.alloc(a, f))
 			 for (actor, fund) in actions]
 
 #</OPERATORS>
