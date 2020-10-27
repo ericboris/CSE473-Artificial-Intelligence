@@ -36,6 +36,12 @@ maintained above this threshold for the predetermined amount of time for success
 #</METADATA>
 
 #<COMMON_DATA>
+# Let MAX_FUNDS be the total amount of money to fund the economy with at the
+# start of the formulation. We define a constant here since the value it 
+# represents is used in more than one place.
+MAX_FUNDS = 100
+MAX_MOVES = 10
+
 #</COMMON_DATA>
 
 #<COMMON_CODE>
@@ -69,7 +75,7 @@ class State():
 					return False
 		return True
 	
-	# TODO fix str
+	# TODO update str to reflect the change to using a features list.
 	def __str__(self):
 		''' Return a string representation of the current state.'''
 		aS, mP, fP = self.features
@@ -96,8 +102,7 @@ class State():
 		''' Return True if allocating the amount of funds in fund to actor
 			does not cause a depression and there are moves remaining,
 			otherwise, return False.'''
-		newS = self.fund(actor, fund)
-		if self.movesRemaining < 0
+		pass
 
 	def alloc(self, actor, fund):
 		''' Allocate the amount of funding in fund to the actor.'''
@@ -107,7 +112,7 @@ def goal_test(s):
   pass
 
 def goal_message(s):
-  return "You prevented a severe depression!" #TODO incorporate the phrase 'depression for x number of days/weeks/months!'
+  return "You prevented a severe depression!"
 
 def get_name(actor, fund):
 	actorMap = {'A': 'Automatic Stabilizers', 'M': 'Monetary Policy', 'F': 'Fiscal Policy'}
@@ -127,11 +132,6 @@ class Operator:
 #</COMMON_CODE>
 
 #<INITIAL_STATE>
-# Let MAX_FUNDS be the total amount of money to fund the economy with at the
-# start of the formulation. We define a constant here since the value it 
-# represents is used in more than one place.
-MAX_FUNDS = 100
-
 # Let INITIAL_FEATURES represent the features of the starting state of the economy. 
 # The feature list should be of the following form:
 # I_F[0] represents the funds currently allocated to the 3 components (AS, MP, FP)
@@ -146,7 +146,7 @@ INITIAL_FEATURES = [[10, 10, 10],
 					[0.8, 0.9, 0.95],
 					[1, 3, 5],
 					[MAX_FUNDS]
-					[10]]
+					[MAX_MOVES]]
 					
 CREATE_INITIAL_STATE = lambda : State(INITIAL_FEATURES)
 #</INITIAL_STATE>
