@@ -40,20 +40,6 @@ maintained above this threshold for the predetermined amount of time for success
 
 #<COMMON_CODE>
 
-# TODO - I made mention below of representing the delay in effectiveness of each
-# each of the financial polices, namely that AS is faster than MP is faster than
-# FP, despite the fact that FP is more effective than MP is more effective than AP. 
-# I think we should represent these efficacies as a list of values, we'll call it d. 
-# So, let's say we have 10 moves, then initialize d = [0] * moves. 
-# Now, if use a turn to distribute funds to AS, then the funds go to d[i + x] where
-# i is the current move and x is some positive integer.
-# If we distribute funds to MP, the funds go to d[i + y] where y is > x.
-# And funds to FP got to d[i + z] where z > y. 
-# Then, when calculating GDP on a given move i, we access the funds in d[i] as 
-# part of that calculation.
-# In this way we can capture the effect that yes, the funds might be more effective
-# given to FP but that effect will take longer to be realized. 
-
 class State():
 	def __init__(self, features):
 		self.features = features
@@ -175,7 +161,20 @@ INIT_FEATURES[FUNDS_IDX] = INIT_FUNDS
 INIT_FEATURES[FUNDS_IDX] = INIT_MOVES
 INIT_FEATURES[RETURNS_IDX] = INIT_RETURNS
 
-					
+# TODO - I made mention of representing the delay in effectiveness of each
+# each of the financial polices, namely that AS is faster than MP is faster than
+# FP, despite the fact that FP is more effective than MP is more effective than AP. 
+# I think we should represent these efficacies as a list of values, we'll call it d. 
+# So, let's say we have 10 moves, then initialize d = [0] * moves. 
+# Now, if use a turn to distribute funds to AS, then the funds go to d[i + x] where
+# i is the current move and x is some positive integer.
+# If we distribute funds to MP, the funds go to d[i + y] where y is > x.
+# And funds to FP got to d[i + z] where z > y. 
+# Then, when calculating GDP on a given move i, we access the funds in d[i] as 
+# part of that calculation.
+# In this way we can capture the effect that yes, the funds might be more effective
+# given to FP but that effect will take longer to be realized. 
+
 CREATE_INITIAL_STATE = lambda : State(INIT_FEATURES)
 #</INITIAL_STATE>
 
