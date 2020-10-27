@@ -41,7 +41,74 @@ maintained above this threshold for the predetermined amount of time for success
 #<COMMON_CODE>
 
 class State():
-  pass
+	def __init__(self, distributions: List(int)):
+		# Let distributions[0] be the amount currently in automatic stabilizers,
+		# let distributions[1] be the amount currently in monetary policy,
+		# let distributions[2] be the amount currently in financial policy.
+		self.distributions = distributions
+		self.totalFunds = totalFunds
+		self.movesRemaining = movesRemaining
+		self.minGDP = minGDP		
+
+	def __eq__(self, other):
+		''' Return True if self and other are the same length
+			and each value held in self and other are equal, 
+			otherwise return False.'''
+		if len(self.distributions) != len(other.distributions):
+			return False
+		return all([a == b for a, b in zip(self.distributions, other.distributions)])
+
+	def __str__(self):
+		''' Return a string representation of the current state.'''
+		aS, mP, fP = self.distributions
+		txt = "The minimum GDP is " + str(self.minGDP)
+		txt += " and the current GDP is " + str(self.GDP)
+		txt += " with " + str(aS) + " in automatic stabilizers "
+		txt += " and " + str(mP) + " in monetary policy "
+		txt += " and " + str(fP) + " in financial policy. "
+		txt += "There are " + str(self.totalFunds) + " funds remaining "
+		txt += " and " + str(self.movesRemaining) + " moves remaining."
+		return txt				
+
+	def calculateGDP(self) -> int:
+		''' return some combination of values stored as autoStabilizer, 
+			monetaryPolicy, and financialPolicy'''
+		# Since these features are systemic, they should create feedback loops
+		# based on their values. We could represent these as each one's 
+		# value decreasing every time step (a result of inflation, perhaps?).
+		aS, mP, fP = self.distributions
+
+		# First pass on the idea mentioned above for decreasing each time step.
+		self.distributions = [aS * 0.8, mP * 0.9, fP * 0.95]
+		
+		# TODO chage the return value to a more reasonable function.
+		return aS * 1.10 + mP * 1.20 + fP * 1.30  
+	
+	def autoStabilizer(amt: int) -> int:
+		''' return a contribution to the GDP based on a 
+			financial distribution made to auto stabilizers.'''
+		# TODO change the return value to something more reasonable. 
+		# Since AS has a faster response rate, we should work in some 
+		# way of representing that it has more immediate effects than MP or FP. 
+		return self.distributions[0] *= 1.25 
+
+	def monetaryPolicy(amt: int) -> int:
+		''' return a contribution to the GDP based on a 
+			financial distribution made to monetary policy.'''
+		# TODO change the return value to something reasonable.
+		# Since MP has a midrate response rate, we should work in some
+		# way of representing that it takes longer than AS but is 
+		# faster than FP. 
+		return self.distributions[1] *= 1.5
+
+	def financialPolicy(amt: int) -> int:
+		''' return a contribution to the GDP based on a 
+            financial distribution made to financial policy.'''
+        # TODO change the return value to something reasonable.
+        # Since FP has the longest response rate, we should work in some
+		# some way if representing that it takes longer to have it's
+		# effect than AS or MP.
+		return self.distributions[2] *= 2.0
 
 def goal_test(s):
   pass
