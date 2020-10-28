@@ -41,126 +41,131 @@ maintained above this threshold for the predetermined amount of time for success
 #<COMMON_CODE>
 
 class State():
-	def __init__(self, features):
-		self.features = features
+    def __init__(self, features):
+        self.features = features
 
-	def __eq__(self, other):
-		''' Return True if self State and other State are equivalent,
-			and False otherwise.'''
-		n = len(self.features)
-		for feat in range(n):
-			m = len(feat)
-			for val in range(m):
-				if self.features[feat][val] != other.features[feat][val]:
-					return False
-		return True
+    def __eq__(self, other):
+        ''' Return True if self State and other State are equivalent,
+        and False otherwise.'''
+        '''
+                n = len(self.features)
+        for feat in range(n):
+            for val in range(feat):
+                if self.features[feat][val] != other.features[feat][val]:
+                    return False
+        return True'''
+        return self.features == other.features
 	
-	# TODO likely change self.getGDP call
-	def __str__(self):
-		''' Return a string representation of the current state.'''
-		txt = "The minimum GDP is " + MIN_GDP
-                txt += "The maximum GDP is " + MAX_GDP
-		txt += " and the current GDP is " + str(self.features[CGDP_IDX][0])
-		txt += "There are " + str(self.features[FUNDS_IDX][0]) + " funds remaining "
-		txt += " and " + str(TOTAL_MOVES - self.features[MOVES_IDX][0]) + " moves remaining."
-		return txt				
+    def __str__(self):
+        ''' Return a string representation of the current state.'''
+        txt = "The minimum GDP is " + str(MIN_GDP)
+        txt += " The maximum GDP is " + str(MAX_GDP)
+        txt += " and the current GDP is " + str(self.features[CGDP_IDX][0])
+        txt += " There are " + str(self.features[FUNDS_IDX][0]) + " funds remaining"
+        txt += " and " + str(TOTAL_MOVES - self.features[MOVES_IDX][0]) + " moves remaining.\n"
+        return txt				
 
-	def __hash__(self):
-		''' Return the hash of this state.'''
-		return (self.__str__()).__hash__()
+    def __hash__(self):
+        ''' Return the hash of this state.'''
+        return (self.__str__()).__hash__()
 
-	def copy(self):
-		''' Return a deep copy of the current state.'''
-		newS = State([])
-		n = len(self.features)
-		for feat in range(n):
-			newS.features.append([])
-			newS.features[feat] = self.features[feat][:]
-		return newS
+    def copy(self):
+        ''' Return a deep copy of the current state.'''
+        newS = State([])
+        n = len(self.features)
+        for feat in range(n):
+            newS.features.append([])
+            newS.features[feat] = self.features[feat][:]
+        return newS
 		
-	# TODO - Implement
-	def can_alloc(self, actor, fund):
-		''' Return True if allocating the amount of funds in fund to actor
-			does not cause a depression and there are moves remaining,
-			otherwise, return False.'''
-	    
-            if self.features[FUNDS_IDX] - fund < 0:
-                return False
-            news = self.alloc(actor, fund)
-            currentGDP = news.features[CGDP_IDX][0]
-            return currentGDP >= MIN_GDP and currentGDP <= MAX_GDP
+    # TODO - Implement
+    def can_alloc(self, actor, fund):
+        ''' Return True if allocating the amount of funds in fund to actor
+        does not cause a depression and there are moves remaining,
+        otherwise, return False.'''
 
-	# TODO - Implement
-	def alloc(self, actor, fund):
-		''' Allocate the amount of funding in fund to the actor.'''
-		news = self.copy()
-                featuresList = news.features
-                gdpInc = 0
-                delay = 0
-                if(actor == 'A'):
-                    gdpInc = autoStabilizer(fund)
-                    delay = INIT_DELAY[0]
-                elif(actor == 'M'):
-                    gdpInc = monPol(fund)
-                    delay = INIT_DELAY[1]
-                elif(actor == 'F'):
-                    gdpInc = fisPol(fund)
-                    delay = INIT_DELAY[2]
-               
-                move = featuresList[MOVES_IDX][0]
-                featuresList[RETURNS_IDX][move + delay] += gdpInc
-                # incGDP increments the GDP at move
-                # gdpInc increments the GDP at move + delay
-                incGDP = featuresList[RETURNS_IDX][move]
-                newGDP = calcGDP(currentGDP, incGDP)
-                featuresList[CGDP_IDX][0] = newGDP
-                featuresList[MOVES_IDX][0] += 1
-                featuresList[FUNDS_IDX][0] -= fund
-                return news
+        if self.features[FUNDS_IDX][0] - fund < 0:
+            return False
+        
+        news = self.alloc(actor, fund)
+        currentGDP = news.features[CGDP_IDX][0]
+        return currentGDP >= MIN_GDP and currentGDP <= MAX_GDP
+
+    # TODO - Implement
+    def alloc(self, actor, fund):
+        ''' Allocate the amount of funding in fund to the actor.'''
+        # print('enter alloc: ' + actor + ' ' + str(fund))
+        news = self.copy()
+        featuresList = news.features
+        # print('in alloc, curr moves:', featuresList[MOVES_IDX][0])
+        gdpInc = 0
+        delay = 0
+        if(actor == 'A'):
+            gdpInc = self.autoStabilizer(fund)
+            delay = INIT_DELAY[0]
+        elif(actor == 'M'):
+            gdpInc = self.monPol(fund)
+            delay = INIT_DELAY[1]
+        elif(actor == 'F'):
+            gdpInc = self.fisPol(fund)
+            delay = INIT_DELAY[2]
+
+        move = featuresList[MOVES_IDX][0]
+        featuresList[RETURNS_IDX][move + delay] += gdpInc
+        # incGDP increments the GDP at move
+        # gdpInc increments the GDP at move + delay
+        incGDP = featuresList[RETURNS_IDX][move]
+        newGDP = self.calcGDP(featuresList[CGDP_IDX][0], incGDP)
+        featuresList[CGDP_IDX][0] = newGDP
+        featuresList[MOVES_IDX][0] += 1
+        featuresList[FUNDS_IDX][0] -= fund
+        print('alloc, curr GDP: ', featuresList[CGDP_IDX][0])
+        return news
             
-        def calcGDP(self, currentGDP, incGDP):
-            '''Calculates the new current GDP'''
-            currentGDP *= (1-INIT_DECAY)
-            currentGDP += incGDP
-            return currentGDP
+    def calcGDP(self, currentGDP, incGDP):
+        '''Calculates the new current GDP'''
+        currentGDP *= (1-INIT_DECAY)
+        currentGDP += incGDP
+        return currentGDP
 
-        def autoStabilizer(self, alloc):
-            '''Determines the GDP increase for AS'''
-            features = self.features
-            return WEIGHTS_IDX[0] * alloc * (GAMMA_IDX[0] ** features[MOVES_IDX][0]) 
-            
-        def monPol(self, alloc):
-            '''Determine the GDP increase for MP'''
-            features = self.features
-            return WEIGHTS_IDX[1] * alloc * (GAMMA_IDX[1] ** features[MOVES_IDX][1])
+    def autoStabilizer(self, alloc):
+        '''Determines the GDP increase for AS'''
+        features = self.features
+        return INIT_WEIGHTS[0] * alloc * (INIT_GAMMA[0] ** features[MOVES_IDX][0]) 
 
-        def fisPol(self, alloc):
-            '''Determine the GDP increase for FP'''
-            features = self.features
-            return WEIGHTS_IDX[2] * alloc * (GAMMA_IDX[2] ** features[MOVES_IDX][2])
+    def monPol(self, alloc):
+        '''Determine the GDP increase for MP'''
+        features = self.features
+        return INIT_WEIGHTS[1] * alloc * (INIT_GAMMA[1] ** features[MOVES_IDX][0])
+
+    def fisPol(self, alloc):
+        '''Determine the GDP increase for FP'''
+        features = self.features
+        return INIT_WEIGHTS[2] * alloc * (INIT_GAMMA[2] ** features[MOVES_IDX][0])
 
 # TODO - Implement
 def goal_test(s):
-  return self.features[MOVES_IDX][0] == TOTAL_MOVES
+    # print('goal_test: ' + str(s.features[MOVES_IDX][0]) + ' ' + str(TOTAL_MOVES))
+    return s.features[MOVES_IDX][0] == TOTAL_MOVES
 
 def goal_message(s):
-  return "You prevented a severe depression!"
+    return "You prevented a severe depression!"
 
 def get_name(actor, fund):
-	actorMap = {'A': 'Automatic Stabilizers', 'M': 'Monetary Policy', 'F': 'Fiscal Policy'}
-	return 'Allocate ' + str(fund) + ' in funding to ' + actorMap[actor] + '.'
+    actorMap = {'A': 'Automatic Stabilizers', 'M': 'Monetary Policy', 'F': 'Fiscal Policy'}
+    return 'Allocate ' + str(fund) + ' in funding to ' + actorMap[actor] + '.'
 
 class Operator:
-  def __init__(self, name, precond, state_transf):
-    self.name = name
-    self.precond = precond
-    self.state_transf = state_transf
+    def __init__(self, name, precond, state_transf):
+        self.name = name
+        self.precond = precond
+        self.state_transf = state_transf
 
-  def is_applicable(self, s):
-    return self.precond(s)
+    def is_applicable(self, s):
+        return self.precond(s)
 
-  def apply(self, s):
-    return self.state_transf(s)
+    def apply(self, s):
+        return self.state_transf(s)
 #</COMMON_CODE>
 
 #<INITIAL_STATE>
@@ -178,7 +183,7 @@ INIT_DELAY = [1, 3, 5]
 INIT_FUNDS = [100]
 INIT_MOVES = [0]
 INIT_RETURNS = [0] * (TOTAL_MOVES + INIT_DELAY[-1])
-INIT_CGDP = [MIN_GDP*(1+INIT_DECAY[0])]
+INIT_CGDP = [MIN_GDP*(1+INIT_DECAY)]
 
 # Let the following constants be the indices where their respective features can
 # be accessed in the feaures list.
@@ -225,13 +230,13 @@ CREATE_INITIAL_STATE = lambda : State(INIT_FEATURES)
 # Let actions be of the form [(actors[0], funds[0]), (actors[0], funds[1]), ... (actors[2], funds[n])]
 # where n is the length of funds. 
 actors = ['A', 'M', 'F']
-funds = [f for f in range(0, INIT_FUNDS, 5)]
+funds = [f for f in range(0, INIT_FUNDS[0], 5)]
 actions = [(a, f) for a in actors for f in funds]
 
 OPERATORS = [Operator(get_name(actor, fund),
-					  lambda state, a=actor, f=fund : state.can_alloc(a, f),
-					  lambda state, a=actor, f=fund : state.alloc(a, f))
-			 for actor, fund in actions]
+                        lambda state, a=actor, f=fund : state.can_alloc(a, f),
+                        lambda state, a=actor, f=fund : state.alloc(a, f))
+                        for actor, fund in actions]
 
 #</OPERATORS>
 
