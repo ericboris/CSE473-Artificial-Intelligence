@@ -130,7 +130,7 @@ INIT_DECAY = [0.8, 0.9, 0.95]
 INIT_DELAY = [1, 3, 5]
 INIT_FUNDS = [100]
 INIT_MOVES = [10]
-INIT_RETURNS = [0] * (INIT_MOVES + INIT_DELAY[-1]]
+INIT_RETURNS = [0] * (INIT_MOVES + INIT_DELAY[-1])
 
 # Let the following constants be the indices where their respective features can
 # be accessed in the feaures list.
