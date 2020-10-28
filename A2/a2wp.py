@@ -184,6 +184,8 @@ INIT_FUNDS = [100]
 INIT_MOVES = [0]
 INIT_RETURNS = [0] * (TOTAL_MOVES + INIT_DELAY[-1])
 INIT_CGDP = [MIN_GDP*(1+INIT_DECAY)]
+INIT_MRA = ['']
+
 
 # Let the following constants be the indices where their respective features can
 # be accessed in the feaures list.
@@ -191,6 +193,7 @@ FUNDS_IDX = 0
 MOVES_IDX = 1
 RETURNS_IDX = 2
 CGDP_IDX = 3
+MRA_IDX = 4
 
 # Let INIT_FEATURES represent the features of the starting state of the economy. 
 # The feature list should be of the following form:
