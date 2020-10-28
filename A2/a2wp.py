@@ -58,9 +58,9 @@ class State():
 	
     def __str__(self):
         ''' Return a string representation of the current state.'''
-        txt = "The minimum GDP is " + str(MIN_GDP)
-        txt += " The maximum GDP is " + str(MAX_GDP)
-        txt += " and the current GDP is " + str(self.features[CGDP_IDX][0])
+        #txt = "The minimum GDP is " + str(MIN_GDP)
+        #txt += " The maximum GDP is " + str(MAX_GDP)
+        txt = "The current GDP is " + str(self.features[CGDP_IDX][0])
         txt += " There are " + str(self.features[FUNDS_IDX][0]) + " funds remaining"
         txt += " and " + str(TOTAL_MOVES - self.features[MOVES_IDX][0]) + " moves remaining.\n"
         return txt				
@@ -183,7 +183,7 @@ INIT_DELAY = [1, 3, 5]
 INIT_FUNDS = [100]
 INIT_MOVES = [0]
 INIT_RETURNS = [0] * (TOTAL_MOVES + INIT_DELAY[-1])
-INIT_CGDP = [MIN_GDP*(1+INIT_DECAY)]
+INIT_CGDP = [MIN_GDP*(1+INIT_DECAY)+1]
 INIT_MRA = ['']
 
 
@@ -233,7 +233,7 @@ CREATE_INITIAL_STATE = lambda : State(INIT_FEATURES)
 # Let actions be of the form [(actors[0], funds[0]), (actors[0], funds[1]), ... (actors[2], funds[n])]
 # where n is the length of funds. 
 actors = ['A', 'M', 'F']
-funds = [f for f in range(0, INIT_FUNDS[0], 5)]
+funds = [f for f in range(0, INIT_FUNDS[0], 20)]
 actions = [(a, f) for a in actors for f in funds]
 
 OPERATORS = [Operator(get_name(actor, fund),
