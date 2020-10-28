@@ -58,14 +58,11 @@ class State():
 	# TODO likely change self.getGDP call
 	def __str__(self):
 		''' Return a string representation of the current state.'''
-		aS, mP, fP = self.features[ACTORS_IDX]
 		txt = "The minimum GDP is " + MIN_GDP
-		txt += " and the current GDP is " + str(self.getGDP())
-		txt += " with " + str(aS) + " in automatic stabilizers "
-		txt += " and " + str(mP) + " in monetary policy "
-		txt += " and " + str(fP) + " in financial policy. "
-		txt += "There are " + str(self.features[FUNDS_IDX]) + " funds remaining "
-		txt += " and " + str(self.features[MOVES_IDX]) + " moves remaining."
+                txt += "The maximum GDP is " + MAX_GDP
+		txt += " and the current GDP is " + str(self.features[CGDP_IDX][0])
+		txt += "There are " + str(self.features[FUNDS_IDX][0]) + " funds remaining "
+		txt += " and " + str(TOTAL_MOVES - self.features[MOVES_IDX][0]) + " moves remaining."
 		return txt				
 
 	def __hash__(self):
@@ -86,16 +83,65 @@ class State():
 		''' Return True if allocating the amount of funds in fund to actor
 			does not cause a depression and there are moves remaining,
 			otherwise, return False.'''
-		pass
+	    
+            if self.features[FUNDS_IDX] - fund < 0:
+                return False
+            news = self.alloc(actor, fund)
+            currentGDP = news.features[CGDP_IDX][0]
+            return currentGDP >= MIN_GDP and currentGDP <= MAX_GDP
 
 	# TODO - Implement
 	def alloc(self, actor, fund):
 		''' Allocate the amount of funding in fund to the actor.'''
-		pass
+		news = self.copy()
+                featuresList = news.features
+                gdpInc = 0
+                delay = 0
+                if(actor == 'A'):
+                    gdpInc = autoStabilizer(fund)
+                    delay = INIT_DELAY[0]
+                elif(actor == 'M'):
+                    gdpInc = monPol(fund)
+                    delay = INIT_DELAY[1]
+                elif(actor == 'F'):
+                    gdpInc = fisPol(fund)
+                    delay = INIT_DELAY[2]
+               
+                move = featuresList[MOVES_IDX][0]
+                featuresList[RETURNS_IDX][move + delay] += gdpInc
+                # incGDP increments the GDP at move
+                # gdpInc increments the GDP at move + delay
+                incGDP = featuresList[RETURNS_IDX][move]
+                newGDP = calcGDP(currentGDP, incGDP)
+                featuresList[CGDP_IDX][0] = newGDP
+                featuresList[MOVES_IDX][0] += 1
+                featuresList[FUNDS_IDX][0] -= fund
+                return news
+            
+        def calcGDP(self, currentGDP, incGDP):
+            '''Calculates the new current GDP'''
+            currentGDP *= (1-INIT_DECAY)
+            currentGDP += incGDP
+            return currentGDP
+
+        def autoStabilizer(self, alloc):
+            '''Determines the GDP increase for AS'''
+            features = self.features
+            return WEIGHTS_IDX[0] * alloc * (GAMMA_IDX[0] ** features[MOVES_IDX][0]) 
+            
+        def monPol(self, alloc):
+            '''Determine the GDP increase for MP'''
+            features = self.features
+            return WEIGHTS_IDX[1] * alloc * (GAMMA_IDX[1] ** features[MOVES_IDX][1])
+
+        def fisPol(self, alloc):
+            '''Determine the GDP increase for FP'''
+            features = self.features
+            return WEIGHTS_IDX[2] * alloc * (GAMMA_IDX[2] ** features[MOVES_IDX][2])
 
 # TODO - Implement
 def goal_test(s):
-  pass
+  return self.features[MOVES_IDX][0] == TOTAL_MOVES
 
 def goal_message(s):
   return "You prevented a severe depression!"
@@ -119,28 +165,27 @@ class Operator:
 
 #<INITIAL_STATE>
 MIN_GDP = 1000
-NUM_FEATURES = 7
-
+MAX_GDP = 2000
+NUM_FEATURES = 4
+TOTAL_MOVES = 10
+INIT_DECAY = 0.025
+INIT_WEIGHTS = [1.25, 1.5, 2.0]
+INIT_GAMMA = [0.8, 0.9, 0.95]
+INIT_DELAY = [1, 3, 5]
 # Let MAX_FUNDS be the total amount of money to fund the economy with at the
 # start of the formulation. We define a constant here since the value it 
 # represents is used in more than one place.
-INIT_ACTORS = [10, 10, 10]
-INIT_WEIGHTS = [1.25, 1.5, 2.0]
-INIT_DECAY = [0.8, 0.9, 0.95]
-INIT_DELAY = [1, 3, 5]
 INIT_FUNDS = [100]
-INIT_MOVES = [10]
-INIT_RETURNS = [0] * (INIT_MOVES + INIT_DELAY[-1])
+INIT_MOVES = [0]
+INIT_RETURNS = [0] * (TOTAL_MOVES + INIT_DELAY[-1])
+INIT_CGDP = [MIN_GDP*(1+INIT_DECAY[0])]
 
 # Let the following constants be the indices where their respective features can
 # be accessed in the feaures list.
-ACTORS_IDX = 0
-WEIGHTS_IDX = 1
-DECAY_IDX = 2
-DELAY_IDX = 3
-FUNDS_IDX = 4
-MOVES_IDX = 5
-RETURNS_IDX = 6
+FUNDS_IDX = 0
+MOVES_IDX = 1
+RETURNS_IDX = 2
+CGDP_IDX = 3
 
 # Let INIT_FEATURES represent the features of the starting state of the economy. 
 # The feature list should be of the following form:
@@ -152,13 +197,10 @@ RETURNS_IDX = 6
 # I_F[5] represents the total number of actions over which stave off a depression
 # Note that each element in INITIAL_FUNDS is a list to simplify the copy and eq functions.
 INIT_FEATURES = [[]] * NUM_FEATURES
-INIT_FEATURES[ACTORS_IDX] = INIT_ACTORS
-INIT_FEATURES[WEIGHTS_IDX] = INIT_WEIGHTS
-INIT_FEATURES[DECAY_IDX] = INIT_DECAY
-INIT_FEATURES[DELAY_IDX] = INIT_DELAY
 INIT_FEATURES[FUNDS_IDX] = INIT_FUNDS
-INIT_FEATURES[FUNDS_IDX] = INIT_MOVES
+INIT_FEATURES[MOVES_IDX] = INIT_MOVES
 INIT_FEATURES[RETURNS_IDX] = INIT_RETURNS
+INIT_FEATURES[CGDP_IDX] = INIT_CGDP
 
 # TODO - I made mention of representing the delay in effectiveness of each
 # each of the financial polices, namely that AS is faster than MP is faster than
@@ -184,12 +226,12 @@ CREATE_INITIAL_STATE = lambda : State(INIT_FEATURES)
 # where n is the length of funds. 
 actors = ['A', 'M', 'F']
 funds = [f for f in range(0, INIT_FUNDS, 5)]
-actions = [a + str(f) for a in actors for f in funds]
+actions = [(a, f) for a in actors for f in funds]
 
 OPERATORS = [Operator(get_name(actor, fund),
 					  lambda state, a=actor, f=fund : state.can_alloc(a, f),
 					  lambda state, a=actor, f=fund : state.alloc(a, f))
-			 for (actor, fund) in actions]
+			 for actor, fund in actions]
 
 #</OPERATORS>
 
