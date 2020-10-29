@@ -54,8 +54,8 @@ class State():
 	
     def __str__(self):
         ''' Return a string representation of the current state.'''
-        txt = "The current GDP is " + str(self.gdp)
-        txt += " There are " + str(self.funds) + " funds remaining"
+        txt = "The current GDP is " + str(int(self.gdp))
+        txt += " there are $" + str(int(self.funds)) + " left in funds"
         txt += " and " + str(TOTAL_MOVES - self.move) + " moves remaining.\n"
         return txt				
 
@@ -79,10 +79,7 @@ class State():
         return news.gdp >= MIN_GDP and news.gdp <= MAX_GDP
 
     def alloc(self, actor, fund):
-        ''' Allocate the amount of funding in fund to the actor.'''
-        if self.funds - fund < 0:
-            return self
-            
+        ''' Allocate the amount of funding in fund to the actor.'''           
         news = self.copy()
 
         d = {'A': (calcPolicyReturn(fund, self.move, WEIGHT[0], GAMMA[0]), DELAY[0]),
@@ -144,7 +141,7 @@ GAMMA = [0.8, 0.9, 0.95]
 DELAY = [1, 3, 5]
 
 INIT_GDP = 1250
-INIT_FUNDS = 250
+INIT_FUNDS = 100
 INIT_MOVES = 0
 INIT_RETURNS = [0] * (TOTAL_MOVES + DELAY[-1])
 
@@ -158,7 +155,7 @@ CREATE_INITIAL_STATE = lambda : State(INIT_GDP, INIT_FUNDS, INIT_MOVES, INIT_RET
 # Let actions be of the form [(actors[0], funds[0]), (actors[0], funds[1]), ... (actors[2], funds[n])]
 # where n is the length of funds. 
 actors = ['A', 'M', 'F']
-funds = [f for f in range(0, INIT_FUNDS + 1, 20)]
+funds = [f for f in range(0, INIT_FUNDS+1, 50)]
 actions = [(a, f) for a in actors for f in funds]
 
 OPERATORS = [Operator(get_name(actor, fund),
