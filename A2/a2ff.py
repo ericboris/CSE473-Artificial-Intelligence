@@ -1,7 +1,7 @@
 '''a2ff.py
 by Eric Boris and Rahul Ram
-UWNetIDs: eboris91,  TODO
-Student numbers: 1976637, and TODO
+UWNetIDs: eboris91,  rram2
+Student numbers: 1976637, and 1963488
 Assignment 2, in CSE 473, Autumn 2020.
 Part A
  
