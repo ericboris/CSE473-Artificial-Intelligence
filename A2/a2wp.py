@@ -1,7 +1,7 @@
 '''a2wp.py
-by Eric Boris and TODO
-UWNetIDs: eboris91, TODO
-Student numbers: 1976637, and TODO
+by Eric Boris and Rahul Ram
+UWNetIDs: eboris91, rram2
+Student numbers: 1976637, and 1963488
 
 Assignment 2, in CSE 473, Autumn 2020.
 PART B
