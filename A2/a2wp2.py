@@ -50,11 +50,13 @@ class State():
     def __eq__(self, other):
         ''' Return True if self State and other State are equivalent,
         and False otherwise.'''
-        return self.gdp == other.gdp and self.funds == other.funds and self.move == other.move and self.returns == other.returns
+        s = [self.gdp, self.funds, self.move, self.returns]
+        o = [other.gdp, other.funds, other.move, other.returns]
+        return all([p == q for p, q in zip(s, o)])
 	
     def __str__(self):
         ''' Return a string representation of the current state.'''
-        txt = "The current GDP is " + str(int(self.gdp))
+        txt = "The current GDP is $" + str(int(self.gdp))
         txt += " there are $" + str(int(self.funds)) + " left in funds"
         txt += " and " + str(TOTAL_MOVES - self.move) + " moves remaining.\n"
         return txt				
