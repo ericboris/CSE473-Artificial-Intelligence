@@ -87,17 +87,17 @@ class State():
             
         news = self.copy()
         #featuresList = news.features
-        d = {'A': (self.autoStabilizer(fund), INIT_DELAY[0]),
-             'M': (self.monPol(fund), INIT_DELAY[1]),
-             'F': (self.fisPol(fund), INIT_DELAY[2])}
+        d = {'A': self.autoStabilizer(fund),
+             'M': self.monPol(fund),
+             'F': self.fisPol(fund)}
         
-        investment, delay = d[actor]
+        investment = d[actor]
         
         # Let currMoveIdx refer to the current index in the returns list.
         currMoveIdx = news.features[MOVES_IDX][0]
         
         # Put the latest investment in the returns list for future access.
-        news.features[RETURNS_IDX][currMoveIdx + delay] += investment
+        news.features[RETURNS_IDX][currMoveIdx] += investment
         
         # Get a previous investment from the returns list for updating the current GDP.
         incGDP = news.features[RETURNS_IDX][currMoveIdx]
@@ -135,7 +135,9 @@ class State():
         return INIT_WEIGHTS[2] * alloc * (INIT_GAMMA[2] ** self.features[MOVES_IDX][0])
 
 def goal_test(s):
-    return s.features[MOVES_IDX][0] >= TOTAL_MOVES - 1 and s.features[CGDP_IDX][0] >= MIN_GDP and s.features[CGDP_IDX][0] <= MAX_GDP
+    #return True
+    print("moves: ", s.features[MOVES_IDX][0])
+    return s.features[MOVES_IDX][0] == (TOTAL_MOVES - 1)
 
 def goal_message(s):
     return "You prevented a severe depression!"
@@ -162,16 +164,16 @@ MIN_GDP = 1000
 MAX_GDP = 2000
 NUM_FEATURES = 4
 TOTAL_MOVES = 10
-INIT_DECAY = 0.025
+INIT_DECAY = 0
 INIT_WEIGHTS = [1.25, 1.5, 2.0]
 INIT_GAMMA = [0.8, 0.9, 0.95]
-INIT_DELAY = [1, 3, 5]
+#INIT_DELAY = [1, 3, 5]
 # Let MAX_FUNDS be the total amount of money to fund the economy with at the
 # start of the formulation. We define a constant here since the value it 
 # represents is used in more than one place.
 INIT_FUNDS = [250]
 INIT_MOVES = [0]
-INIT_RETURNS = [0] * (TOTAL_MOVES + INIT_DELAY[-1])
+INIT_RETURNS = [0] * (TOTAL_MOVES)
 #INIT_RETURNS = [i for i in range(TOTAL_MOVES + INIT_DELAY[-1])]
 #INIT_CGDP = [MIN_GDP*(1+INIT_DECAY)+1]
 INIT_CGDP = [1250]

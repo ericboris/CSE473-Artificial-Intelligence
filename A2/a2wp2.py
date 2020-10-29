@@ -17,7 +17,7 @@ This file contains our problem formulation for preventing a depression in the US
 SOLUZION_VERSION = "2.0"
 PROBLEM_NAME = "Avoiding a Severe Economic Depression in the US"
 PROBLEM_VERSION = "1.0"
-PROBLEM_AUTHORS = ['E. Boris', 'TODO']
+PROBLEM_AUTHORS = ['E. Boris', 'R. Ram']
 PROBLEM_CREATION_DATE = "22-Oct-2020"
 
 # The following field is mainly for the human solver, via either the Text_SOLUZION_Client.
