@@ -121,7 +121,7 @@ class State():
         ''' Allocate the amount of funding in fund to the policy.'''           
         newS = self.copy()
 
-        # Let d map an investment policy to it's return in investment and
+        # Let d map an investment policy to it's return in investment as
         # a number of months until that return is realized.
         d = {'as': (policyInvestment(fund, self.month, WEIGHT[0], GAMMA[0]), DELAY[0]),
              'mp': (policyInvestment(fund, self.month, WEIGHT[1], GAMMA[1]), DELAY[1]),
