@@ -14,46 +14,85 @@ This file contains our problem formulation for preventing a depression in the US
 # the format shown.
 
 #<METADATA>
-SOLUZION_VERSION = "2.0"
-PROBLEM_NAME = "Avoiding a Severe Economic Depression in the US"
-PROBLEM_VERSION = "1.0"
-PROBLEM_AUTHORS = ['E. Boris', 'TODO']
-PROBLEM_CREATION_DATE = "22-Oct-2020"
+SOLUZION_VERSION = '2.0'
+PROBLEM_NAME = 'Avoiding a Severe Economic Depression in the US'
+PROBLEM_VERSION = '1.0'
+PROBLEM_AUTHORS = ['E. Boris', 'R. Ram']
+PROBLEM_CREATION_DATE = '22-Oct-2020'
 
 # The following field is mainly for the human solver, via either the Text_SOLUZION_Client.
 # or the SVG graphics client.
 PROBLEM_DESC=\
- '''The <b>"Avoiding a Severe Economic Depression in the US"</b>
-is a wicked problem in which a country (the US) starts off in an economic state determined by:
-1. a GDP with funds distributed between three components: Auto Stablizers (As), Monetary Policies (Mp),
-and Fiscal Policies (Fp), 2. a predetermined amount of time steps over which to maintain economic 
-stability, and 3. a total amount of wealth to distribute into the economy. The object is to distribute
-some quantity of funding 0 <= f <= totalFunds to one of the three components of GDP (As, Mp, Fp) on any given
-action with the intent of maintaining the GDP above a minimum threshold represented by the starting GDP.
-This is to say, that the GDP may never drop below the starting point. The health of the economy must be
-maintained above this threshold for the predetermined amount of time for success to be achieved.      
+ '''The <b>'Avoiding a Severe Economic Depression in the US'</b>
+is a wicked problem in which the country begins with certain GDP, amount of funds, and number of months
+over which to allocate those funds into three investment strategies: Automatic Stablizers (As), 
+Monetary Policies (Mp), and Fiscal Policies. Each investment strategy has pros and cons, for example
+Automatic Stabilizes are quick to produce net positive returns on GDP but that effect is relatively small, 
+Fiscal Policies however are the opposite, they take a longer time to produce returns but their effect
+is much greater. Each strategy also has a gamma associated with it, that is, a diminishing return on its
+effects the later that it is used. The object is to maintain a stable GDP over the period of months, in other
+words, a GDP too high or too low will trigger a depression. Success is achieved when the correct combination
+of policy investments is made such that no depression occurs during this timeframe.
 '''
 #</METADATA>
 
 #<COMMON_DATA>
+# The following constants in COMMON_DATA represent
+# the parameters of the problem formulation and
+# they can and should be varied to test out different
+# simulations. 
+# Their current settings are not intended to reflect
+# their real world counterparts as much as to provide an
+# interesting and computation-time reasonable simulation.
+
+# Let MIN and MAX GDP represent the lower and 
+# upper bounds within which to maintain the GDP.
+MIN_GDP = 1000
+MAX_GDP = 2000
+
+# Let TOTAL_MONTHS represent the total number of 
+# months to prevent a depression over.
+TOTAL_MONTHS = 12
+
+# Let INFLATION represent the rate of depreciation of 
+# GDP due to inflation. 
+INFLATION = 0.04
+
+# Let WEIGHT represent the multiplicative returns on the
+# 3 investment strategies: as, mp, and fp, respectively.
+WEIGHT = [1.5, 2.3, 3.7]
+
+# Let GAMMA represent the diminishing effectiveness
+# of the 3 investment strategies per month step.
+GAMMA = [0.5, 0.9, 0.7]
+
+# Let DELAY represent the delay on investment returns
+# on an investment strategy in months.
+DELAY = [1, 3, 8]
 #</COMMON_DATA>
 
 #<COMMON_CODE>
 
 class State():
-    def __init__(self, features):
-        self.features = features
+    ''' Let a state represent the state of the current GDP.'''
+    def __init__(self, gdp, funds, month, returns):
+        self.gdp = gdp
+        self.funds = funds
+        self.month = month
+        self.returns = returns
 
     def __eq__(self, other):
         ''' Return True if self State and other State are equivalent,
         and False otherwise.'''
-        return self.features == other.features
+        s = [self.gdp, self.funds, self.month, self.returns]
+        o = [other.gdp, other.funds, other.month, other.returns]
+        return all([p == q for p, q in zip(s, o)])
 	
     def __str__(self):
         ''' Return a string representation of the current state.'''
-        txt = "The current GDP is " + str(self.features[CGDP_IDX][0])
-        txt += " There are " + str(self.features[FUNDS_IDX][0]) + " funds remaining"
-        txt += " and " + str(TOTAL_MOVES - self.features[MOVES_IDX][0]) + " moves remaining.\n"
+        txt = 'The current GDP is $' + str(int(self.gdp))
+        txt += ', there are $' + str(int(self.funds)) + ' left in funds'
+        txt += ' and there are ' + str(TOTAL_MONTHS - self.month) + ' months remaining.\n'
         return txt				
 
     def __hash__(self):
@@ -62,91 +101,69 @@ class State():
 
     def copy(self):
         ''' Return a deep copy of the current state.'''
-        newS = State(self.features[:])
-        return newS
+        return State(self.gdp, self.funds, self.month, self.returns[:])
 		
-    def can_alloc(self, actor, fund):
-        ''' Return True if allocating the amount of funds in fund to actor
-        does not cause a depression and there are moves remaining,
+    def can_alloc(self, policy, fund):
+        ''' Return True if allocating the amount of funds in fund to policy
+        does not cause a depression and there are months remaining,
         otherwise, return False.'''
 
-        if self.features[FUNDS_IDX][0] - fund < 0:
+        # Make sure we're not out of bounds of the problem.
+        if self.funds - fund < 0 or self.month >= TOTAL_MONTHS:
             return False
             
-        if self.features[MOVES_IDX][0] < TOTAL_MOVES - 1:
-            news = self.alloc(actor, fund)
-            currentGDP = news.features[CGDP_IDX][0]
-            return currentGDP >= MIN_GDP and currentGDP <= MAX_GDP and news.features[FUNDS_IDX][0] >= 0 and news.features[MOVES_IDX][0] <= 9
-            
-        return False
+        # Otherwise, apply the policy changes and check that 
+        # the results don't through the simulation out of bounds.
+        newS = self.alloc(policy, fund)
+        return newS.gdp >= MIN_GDP and newS.gdp <= MAX_GDP
 
-    def alloc(self, actor, fund):
-        ''' Allocate the amount of funding in fund to the actor.'''
-        if self.features[FUNDS_IDX][0] - fund < 0:
-            return self
-            
-        news = self.copy()
-        #featuresList = news.features
-        d = {'A': self.autoStabilizer(fund),
-             'M': self.monPol(fund),
-             'F': self.fisPol(fund)}
-        
-        investment = d[actor]
-        
-        # Let currMoveIdx refer to the current index in the returns list.
-        currMoveIdx = news.features[MOVES_IDX][0]
-        
-        # Put the latest investment in the returns list for future access.
-        news.features[RETURNS_IDX][currMoveIdx] += investment
-        
-        # Get a previous investment from the returns list for updating the current GDP.
-        incGDP = news.features[RETURNS_IDX][currMoveIdx]
-        
-        # Calculate the latest GDP. 
-        newGDP = self.calcGDP(news.features[CGDP_IDX][0], incGDP)
-        
-        # Update the new state's features
-        news.features[CGDP_IDX][0] = newGDP
-        news.features[MOVES_IDX][0] += 1
-        news.features[FUNDS_IDX][0] -= fund
+    def alloc(self, policy, fund):
+        ''' Allocate the amount of funding in fund to the policy.'''           
+        newS = self.copy()
 
-        print('return from alloc', news.features)
-        return news
-            
-    def calcGDP(self, currentGDP, incGDP):
-        '''Calculates the new current GDP'''
-        currentGDP *= (1-INIT_DECAY)
-        currentGDP += incGDP
-        return currentGDP
+        # Let d map an investment policy to it's return in investment and
+        # a number of months until that return is realized.
+        d = {'as': (policyInvestment(fund, self.month, WEIGHT[0], GAMMA[0]), DELAY[0]),
+             'mp': (policyInvestment(fund, self.month, WEIGHT[1], GAMMA[1]), DELAY[1]),
+             'fp': (policyInvestment(fund, self.month, WEIGHT[2], GAMMA[2]), DELAY[2])}
+        
+        investment, delay = d[policy]
+        
+        # Reap the previously invested returns.
+        policyReturn = newS.returns[self.month]
+        
+        # Reflect the allocation of funding to a particular
+        # investment policy on the new state.
+        newS.gdp = newGDP(self.gdp, policyReturn)
+        newS.month += 1
+        newS.funds -= fund
+        newS.returns[self.month + delay] += investment
 
-    def autoStabilizer(self, alloc):
-        '''Determines the GDP increase for AS'''
-        #features = self.features
-        return INIT_WEIGHTS[0] * alloc * (INIT_GAMMA[0] ** self.features[MOVES_IDX][0]) 
+        return newS
 
-    def monPol(self, alloc):
-        '''Determine the GDP increase for MP'''
-        #features = self.features
-        return INIT_WEIGHTS[1] * alloc * (INIT_GAMMA[1] ** self.features[MOVES_IDX][0])
+def newGDP(gdp, policyReturn):
+    ''' Return the new GDP from the current GDP and the policy investment returns.'''
+    return (gdp * (1 - INFLATION)) + policyReturn
 
-    def fisPol(self, alloc):
-        '''Determine the GDP increase for FP'''
-        #features = self.features
-        return INIT_WEIGHTS[2] * alloc * (INIT_GAMMA[2] ** self.features[MOVES_IDX][0])
+def policyInvestment(alloc, month, weight, gamma):
+    ''' Return the amount in returns of investing in a particular investment policy.'''
+    return weight * alloc * (gamma ** month)
 
 def goal_test(s):
-    #return True
-    print("moves: ", s.features[MOVES_IDX][0])
-    return s.features[MOVES_IDX][0] == (TOTAL_MOVES - 1)
+    ''' Return True if a goal state is encountered and False otherwise.'''
+    return s.month >= TOTAL_MONTHS and s.gdp >= MIN_GDP and s.gdp <= MAX_GDP
 
 def goal_message(s):
-    return "You prevented a severe depression!"
+    ''' Return a message for reaching a goal state. '''
+    return 'You prevented a severe depression!'
 
-def get_name(actor, fund):
-    actorMap = {'A': 'Automatic Stabilizers', 'M': 'Monetary Policy', 'F': 'Fiscal Policy'}
-    return 'Allocate ' + str(fund) + ' in funding to ' + actorMap[actor] + '.'
+def get_name(policy, fund):
+    ''' Return a description of the action of funding an investment policy.'''
+    policyMap = {'as': 'Automatic Stabilizers', 'mp': 'Monetary Policy', 'fp': 'Fiscal Policy'}
+    return 'Allocate ' + str(fund) + ' in funding to ' + policyMap[policy] + '.'
 
 class Operator:
+    ''' Let an Operator represent the current action made on a state.'''
     def __init__(self, name, precond, state_transf):
         self.name = name
         self.precond = precond
@@ -160,79 +177,29 @@ class Operator:
 #</COMMON_CODE>
 
 #<INITIAL_STATE>
-MIN_GDP = 1000
-MAX_GDP = 2000
-NUM_FEATURES = 4
-TOTAL_MOVES = 10
-INIT_DECAY = 0
-INIT_WEIGHTS = [1.25, 1.5, 2.0]
-INIT_GAMMA = [0.8, 0.9, 0.95]
-#INIT_DELAY = [1, 3, 5]
-# Let MAX_FUNDS be the total amount of money to fund the economy with at the
-# start of the formulation. We define a constant here since the value it 
-# represents is used in more than one place.
-INIT_FUNDS = [250]
-INIT_MOVES = [0]
-INIT_RETURNS = [0] * (TOTAL_MOVES)
-#INIT_RETURNS = [i for i in range(TOTAL_MOVES + INIT_DELAY[-1])]
-#INIT_CGDP = [MIN_GDP*(1+INIT_DECAY)+1]
-INIT_CGDP = [1250]
-#INIT_MRA = ['']
+# Let the following constants represent the values
+# for the initial state object.
+INIT_GDP = 1250
+INIT_FUNDS = 1000
+INIT_MONTHS = 0
+INIT_RETURNS = [0] * (TOTAL_MONTHS + DELAY[-1])
 
-
-# Let the following constants be the indices where their respective features can
-# be accessed in the feaures list.
-FUNDS_IDX = 0
-MOVES_IDX = 1
-RETURNS_IDX = 2
-CGDP_IDX = 3
-#MRA_IDX = 4
-
-# Let INIT_FEATURES represent the features of the starting state of the economy. 
-# The feature list should be of the following form:
-# I_F[0] represents the funds currently allocated to the 3 components (AS, MP, FP)
-# I_F[1] represents the weights funds allocated to the components have on GDP
-# I_F[2] represents the amounts by which each of the components depreciates each move
-# I_F[3] represents the time delay for funds allocated to the components to affect GDP
-# I_F[4] represents the total funds available to allocate to the 3 components
-# I_F[5] represents the total number of actions over which stave off a depression
-# Note that each element in INITIAL_FUNDS is a list to simplify the copy and eq functions.
-INIT_FEATURES = [[]] * NUM_FEATURES
-INIT_FEATURES[FUNDS_IDX] = INIT_FUNDS
-INIT_FEATURES[MOVES_IDX] = INIT_MOVES
-INIT_FEATURES[RETURNS_IDX] = INIT_RETURNS
-INIT_FEATURES[CGDP_IDX] = INIT_CGDP
-
-# TODO - I made mention of representing the delay in effectiveness of each
-# each of the financial polices, namely that AS is faster than MP is faster than
-# FP, despite the fact that FP is more effective than MP is more effective than AP. 
-# I think we should represent these efficacies as a list of values, we'll call it d. 
-# So, let's say we have 10 moves, then initialize d = [0] * moves. 
-# Now, if use a turn to distribute funds to AS, then the funds go to d[i + x] where
-# i is the current move and x is some positive integer.
-# If we distribute funds to MP, the funds go to d[i + y] where y is > x.
-# And funds to FP got to d[i + z] where z > y. 
-# Then, when calculating GDP on a given move i, we access the funds in d[i] as 
-# part of that calculation.
-# In this way we can capture the effect that yes, the funds might be more effective
-# given to FP but that effect will take longer to be realized. 
-
-CREATE_INITIAL_STATE = lambda : State(INIT_FEATURES)
+CREATE_INITIAL_STATE = lambda : State(INIT_GDP, INIT_FUNDS, INIT_MONTHS, INIT_RETURNS)
 #</INITIAL_STATE>
 
 #<OPERATORS>
 
-# We'll merge actors and funds into a list of tuples called actions.
-# Let actions be of the form [(actors[0], funds[0]), (actors[0], funds[1]), ... (actors[2], funds[n])]
+# We'll merge policies and funds into a list of tuples called actions.
+# Let actions be of the form [(policies[0], funds[0]), (policies[0], funds[1]), ... (policies[2], funds[n])]
 # where n is the length of funds. 
-actors = ['A', 'M', 'F']
-funds = [f for f in range(0, INIT_FUNDS[0], 20)]
-actions = [(a, f) for a in actors for f in funds]
+policies = ['as', 'mp', 'mp']
+funds = [f for f in range(0, INIT_FUNDS+1, 100)]
+actions = [(p, f) for p in policies for f in funds]
 
-OPERATORS = [Operator(get_name(actor, fund),
-                        lambda state, a=actor, f=fund : state.can_alloc(a, f),
-                        lambda state, a=actor, f=fund : state.alloc(a, f))
-                        for actor, fund in actions]
+OPERATORS = [Operator(get_name(policy, fund),
+                        lambda state, p=policy, f=fund : state.can_alloc(p, f),
+                        lambda state, p=policy, f=fund : state.alloc(p, f))
+                        for policy, fund in actions]
 
 #</OPERATORS>
 
