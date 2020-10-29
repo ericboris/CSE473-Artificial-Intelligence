@@ -179,7 +179,7 @@ class Operator:
 #<INITIAL_STATE>
 # Let the following constants represent the values
 # for the initial state object.
-INIT_GDP = 1250
+INIT_GDP = 1850
 INIT_FUNDS = 1000
 INIT_MONTHS = 0
 INIT_RETURNS = [0] * (TOTAL_MONTHS + DELAY[-1])
