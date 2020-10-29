@@ -76,7 +76,7 @@ class State():
         if self.features[MOVES_IDX][0] < TOTAL_MOVES - 1:
             news = self.alloc(actor, fund)
             currentGDP = news.features[CGDP_IDX][0]
-            return currentGDP >= MIN_GDP and currentGDP <= MAX_GDP
+            return currentGDP >= MIN_GDP and currentGDP <= MAX_GDP and news.features[FUNDS_IDX][0] >= 0 and news.features[MOVES_IDX][0] <= 9
             
         return False
 
@@ -91,32 +91,21 @@ class State():
              'M': (self.monPol(fund), INIT_DELAY[1]),
              'F': (self.fisPol(fund), INIT_DELAY[2])}
         
-        gdpInc, delay = d[actor]
+        investment, delay = d[actor]
         
-        '''
-        if(actor == 'A'):
-            gdpInc = self.autoStabilizer(fund)
-            delay = INIT_DELAY[0]
-        elif(actor == 'M'):
-            gdpInc = self.monPol(fund)
-            delay = INIT_DELAY[1]
-        elif(actor == 'F'):
-            gdpInc = self.fisPol(fund)
-            delay = INIT_DELAY[2]
-        '''
-
-        #move = featuresList[MOVES_IDX][0]
-        move = news.features[MOVES_IDX][0]
-        #featuresList[RETURNS_IDX][move + delay] += gdpInc
-        news.features[RETURNS_IDX][move + delay] += gdpInc
-        #incGDP = featuresList[RETURNS_IDX][move]
-        incGDP = news.features[RETURNS_IDX][move]
-        #newGDP = self.calcGDP(featuresList[CGDP_IDX][0], incGDP)
+        # Let currMoveIdx refer to the current index in the returns list.
+        currMoveIdx = news.features[MOVES_IDX][0]
+        
+        # Put the latest investment in the returns list for future access.
+        news.features[RETURNS_IDX][currMoveIdx + delay] += investment
+        
+        # Get a previous investment from the returns list for updating the current GDP.
+        incGDP = news.features[RETURNS_IDX][currMoveIdx]
+        
+        # Calculate the latest GDP. 
         newGDP = self.calcGDP(news.features[CGDP_IDX][0], incGDP)
         
-        #featuresList[CGDP_IDX][0] = newGDP
-        #featuresList[MOVES_IDX][0] += 1
-        #featuresList[FUNDS_IDX][0] -= fund
+        # Update the new state's features
         news.features[CGDP_IDX][0] = newGDP
         news.features[MOVES_IDX][0] += 1
         news.features[FUNDS_IDX][0] -= fund
