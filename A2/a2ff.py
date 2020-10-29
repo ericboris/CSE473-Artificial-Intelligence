@@ -30,8 +30,6 @@ PROBLEM_DESC=\
 #<COMMON_DATA>
 #</COMMON_DATA>
 
-# TODO - comment code
-
 #<COMMON_CODE>
 class State():    
     def __init__(self, banks):
