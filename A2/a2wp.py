@@ -60,10 +60,11 @@ class State():
         ''' Return a string representation of the current state.'''
         #txt = "The minimum GDP is " + str(MIN_GDP)
         #txt += " The maximum GDP is " + str(MAX_GDP)
-        txt = "The current GDP is " + str(self.features[CGDP_IDX][0])
+        return ''
+        '''txt = "The current GDP is " + str(self.features[CGDP_IDX][0])
         txt += " There are " + str(self.features[FUNDS_IDX][0]) + " funds remaining"
         txt += " and " + str(TOTAL_MOVES - self.features[MOVES_IDX][0]) + " moves remaining.\n"
-        return txt				
+        return txt'''				
 
     def __hash__(self):
         ''' Return the hash of this state.'''
@@ -71,11 +72,13 @@ class State():
 
     def copy(self):
         ''' Return a deep copy of the current state.'''
+        #print("current self: ", self.features[RETURNS_IDX])
         newS = State([])
         n = len(self.features)
         for feat in range(n):
             newS.features.append([])
             newS.features[feat] = self.features[feat][:]
+        #print("new self: ", newS.features[RETURNS_IDX])
         return newS
 		
     # TODO - Implement
@@ -88,13 +91,15 @@ class State():
             return False
         
         news = self.alloc(actor, fund)
+        #print("after alloc: "news.features[RETURNS_IDX])
         currentGDP = news.features[CGDP_IDX][0]
         return currentGDP >= MIN_GDP and currentGDP <= MAX_GDP
 
     # TODO - Implement
     def alloc(self, actor, fund):
         ''' Allocate the amount of funding in fund to the actor.'''
-        # print('enter alloc: ' + actor + ' ' + str(fund))
+        #print('enter alloc: ' + actor + ' ' + str(fund))
+        #print("before copy: ", self.features[RETURNS_IDX])
         news = self.copy()
         featuresList = news.features
         # print('in alloc, curr moves:', featuresList[MOVES_IDX][0])
@@ -112,14 +117,20 @@ class State():
 
         move = featuresList[MOVES_IDX][0]
         featuresList[RETURNS_IDX][move + delay] += gdpInc
+        #print("After gdpInc:", featuresList[RETURNS_IDX])
         # incGDP increments the GDP at move
         # gdpInc increments the GDP at move + delay
+        #print(move)
         incGDP = featuresList[RETURNS_IDX][move]
+        #print("incGDP:", incGDP)
         newGDP = self.calcGDP(featuresList[CGDP_IDX][0], incGDP)
+        #print("NewGDP: ", newGDP)
         featuresList[CGDP_IDX][0] = newGDP
         featuresList[MOVES_IDX][0] += 1
         featuresList[FUNDS_IDX][0] -= fund
-        print('alloc, curr GDP: ', featuresList[CGDP_IDX][0])
+        #print('alloc, curr GDP: ', featuresList[CGDP_IDX][0])
+        #print("After2:", featuresList[RETURNS_IDX])   
+        #print("newState list: ", news.features[RETURNS_IDX])
         return news
             
     def calcGDP(self, currentGDP, incGDP):
@@ -173,7 +184,7 @@ MIN_GDP = 1000
 MAX_GDP = 2000
 NUM_FEATURES = 4
 TOTAL_MOVES = 10
-INIT_DECAY = 0.025
+INIT_DECAY = 0
 INIT_WEIGHTS = [1.25, 1.5, 2.0]
 INIT_GAMMA = [0.8, 0.9, 0.95]
 INIT_DELAY = [1, 3, 5]
@@ -184,7 +195,7 @@ INIT_FUNDS = [100]
 INIT_MOVES = [0]
 INIT_RETURNS = [0] * (TOTAL_MOVES + INIT_DELAY[-1])
 INIT_CGDP = [MIN_GDP*(1+INIT_DECAY)+1]
-INIT_MRA = ['']
+#INIT_MRA = ['']
 
 
 # Let the following constants be the indices where their respective features can
@@ -193,7 +204,7 @@ FUNDS_IDX = 0
 MOVES_IDX = 1
 RETURNS_IDX = 2
 CGDP_IDX = 3
-MRA_IDX = 4
+#MRA_IDX = 4
 
 # Let INIT_FEATURES represent the features of the starting state of the economy. 
 # The feature list should be of the following form:
