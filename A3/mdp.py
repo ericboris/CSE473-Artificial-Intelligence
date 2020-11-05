@@ -40,6 +40,28 @@ class QLearn:
 		# Update the table with the new Q value.	
 		self.table[s][a] = newQ
 
+def display(s, a, sPrime, qOld, qNew):
+	''' Print a string detailing state and value changes.'''
+	txt = 's a s`:\n'
+	txt += s + ' ' + a + ' ' + sPrime + '\n'
+	txt += 'Q update:\n'
+	txt += str(qOld) + ' -> ' + str(qNew) + '\n'
+	print(txt)
+
+def process(actions):
+	''' Process each action in actions, updating a q table along the way.'''
+	q = QLearn(START_STATE, ALPHA, GAMMA, TRANSITIONS)
+	s = START_STATE
+	print('-- Begin --\n')	
+	for a in actions:	
+		_, sPrime = TRANSITIONS[s][a]
+		qOld = q.table[s][a]
+		q.update(s, a)
+		qNew = q.table[s][a]
+		display(s, a, sPrime, qOld, qNew)
+		s = sPrime
+	print('\n')	
+
 TRANSITIONS = {'A': {'E': (-1, 'B'), 'S': (1, 'D')},
     'B': {'E': (-1, 'C'), 'S': (-1, 'K'), 'W': (-1, 'A')},
 	'C': {'S': (-1, 'F'), 'W': (-1, 'B')},
@@ -53,23 +75,12 @@ TRANSITIONS = {'A': {'E': (-1, 'B'), 'S': (1, 'D')},
 ALPHA = 0.5
 GAMMA = 1
 
-actionsA = ['E', 'S', 'W', 'N', 'E', 'S', 'W', 'N']
-actionsB = ['E', 'E', 'W', 'S', 'E', 'N', 'W', 'W']
-actionsX = ['E', 'E', 'S', 'S', 'W', 'E', 'W', 'W', 'N', 'E', 'W', 'E', 'E', 'S','W', 'E']
-ACTIONS = [actionsA, actionsB, actionsX]
+A = ['E', 'S', 'W', 'N', 'E', 'S', 'W', 'N']
+B = ['E', 'E', 'W', 'S', 'E', 'N', 'W', 'W']
+C = ['E', 'E', 'S', 'S', 'W', 'E', 'W', 'W', 'N', 'E', 'W', 'E', 'E', 'S','W', 'E']
+SECTIONS = [A, B, C]
 
 START_STATE = 'A'
 
-for action in ACTIONS:
-	q = QLearn(START_STATE, ALPHA, GAMMA, TRANSITIONS)
-	s = START_STATE	
-	print(q.table)
-	for a in action:	
-		_, sPrime = TRANSITIONS[s][a]
-		q.update(s, a)
-		print(s, a, sPrime)
-		print(q.table[s][a])
-		print('\n')
-		s = sPrime
-	print(q.table)
-	print('\n\n\n')
+for actions in SECTIONS:
+	process(actions)	
