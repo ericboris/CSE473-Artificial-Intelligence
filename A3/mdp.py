@@ -68,6 +68,14 @@ class MDP:
 		''' Increment the number of visits to state s. '''
 		self.n[s][a] += 1
 
+	def currentState(self):
+		''' Return the current state of the mdp. '''
+		return self.state
+
+	def currentQ(self, s, a):
+		''' Return the current utility value at s, a. '''
+		return self.q[s][a]
+
 
 def display(s, a, sp, mdpOld, mdpNew):
 	''' Print a string detailing state and value changes.'''
@@ -83,11 +91,11 @@ def process(actions):
 	s = START_STATE
 	print('-- Begin --\n')	
 	for a in actions:	
-		oldQ = mdp.q[s][a]
+		oldQ = mdp.currentQ(s, a)
 		newQ = mdp.regularUpdate(s, a)
 		mdp.updateQ(s, a, newQ)
 		mdp.changeState(s, a)
-		sp = mdp.state
+		sp = mdp.currentState()
 		display(s, a, sp, oldQ, newQ)
 		s = sp
 	print(mdp.q)
@@ -100,12 +108,12 @@ def explore(k):
 	print('-- Begin Explore --\n')
 	for i in range(k):
 		a = mdp.nextAction(s)
-		oldQ = mdp.q[s][a]
+		oldQ = mdp.currentQ(s, a)
 		newQ = mdp.modifiedUpdate(s, a)
 		mdp.updateQ(s, a, newQ)
 		mdp.incrementVisit(s, a)
 		mdp.changeState(s, a)
-		sp = mdp.state
+		sp = mdp.currentState()
 		display(s, a, sp, oldQ, newQ)
 		s = sp
 	print(mdp.q)
