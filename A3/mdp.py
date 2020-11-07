@@ -1,16 +1,17 @@
 from collections import defaultdict
 
-class QLearn:
+class MDP:
 	def __init__(self, state, alpha, gamma, transitions):
 		self.state = state
 		self.alpha = alpha
 		self.gamma = gamma
 		self.transitions = transitions
-		self.qTable = self.newTable() 
-		self.vTable = self.newTable()
+		self.q = self.newTable() 
+		self.n = self.newTable()
 
 	def newTable(self):
-		qTable = {'A': {'E': 0, 'S': 0},
+		''' Return a new state-action table with values initalized to 0. '''
+		t = {'A': {'E': 0, 'S': 0},
 			'B': {'E': 0, 'S': 0, 'W': 0},
 			'C': {'S': 0, 'W': 0},
 			'D': {'E': 0, 'S': 0, 'N': 0}, 
@@ -19,86 +20,102 @@ class QLearn:
 			'G': {'E': 0, 'N': 0, 'X': 0}, 
 			'H': {'E': 0, 'W': 0, 'N': 0}, 
 			'I': {'W': 0, 'N': 0}}
-		return qTable
+		return t 
 
 	def nextAction(self, s):
+		''' Return the highest valued action to take from the current step. '''
 		possibleActions = ['E', 'S', 'W', 'N', 'X']
 		maxQ = float('-inf')
 		a = None
-		print('next action')
 		for pa in possibleActions:
-			if pa in self.qTable[s] and self.qTable[s][pa] > maxQ:
-				maxQ = self.qTable[s][pa]
+			if pa in self.q[s] and self.q[s][pa] > maxQ:
+				maxQ = self.q[s][pa]
 				a = pa
-				print('state ' + s)
-				print('action ' + a)
 		return a
 
-	def update(self, s, a, isSimple):
-		# Make sure that the action is legal from the current state.
-		if a not in self.qTable[self.state]:
-			return
+	def regularUpdate(self, s, a):
+		''' Find the utility of performing action a from state s. '''
+		r, sp = self.transitions[s][a]
+		maxUtility = max([u for u in self.q[sp].values()])
+		sample = r + self.gamma * maxUtility
+		newUtility = (1 - self.alpha) * self.q[s][a] + self.alpha * sample
+		return newUtility
+    
+	def modifiedUpdate(self, s, a):
+		''' Find the utility of performing action a from state s with an explore function. '''
+		r, sp = self.transitions[s][a]
+		f = lambda u, n: u + (1 / (n + 1))
+		maxF = float('-inf')
+		for ap in self.transitions[sp].keys():
+			u = self.q[sp][ap]
+			n = self.n[sp][ap]
+			if f(u, n) > maxF:
+				maxF = f(u, n)
+		sample = r + self.gamma * maxF
+		newUtility = (1 - self.alpha) * self.q[s][a] + self.alpha * sample
+		return newUtility
 
-		# If it is then move to the new state s' and update the qTable of q values.
-		self.state = s		
+	def updateQ(self, s, a, utility):
+		''' Assign the given utility value to state s and action a. '''
+		self.q[s][a] = utility
 
-		# Increment the action taken from state
-		self.vTable[s][a] += 1
+	def changeState(self, s, a):
+		''' Update the model to reflect a change in state from s via action a to state sp. '''
+		_, sp = self.transitions[s][a]
+		self.state = sp
 
-		# Calculate the sample.
-		r, sPrime = self.transitions[s][a]
-		if isSimple:
-			maxQ = max([v for v in self.qTable[sPrime].values()])
-		else:
-			f = lambda u, n : u + (1 / (1 + n))
-			maxQ = max([f(self.qTable[sPrime][ap], self.vTable[sPrime][ap]) for ap in self.qTable[sPrime].keys()])
-		sample = r + self.gamma * maxQ
-		
-		# Calculate the new Q value.
-		currQ = self.qTable[s][a]
-		newQ = (1 - self.alpha) * currQ + self.alpha * sample
-	
-		# Update the qTable with the new Q value.	
-		self.qTable[s][a] = newQ	
+	def incrementVisit(self, s, a):
+		''' Increment the number of visits to state s. '''
+		self.n[s][a] += 1
 
-def display(s, a, sPrime, qOld, qNew):
+
+def display(s, a, sp, mdpOld, mdpNew):
 	''' Print a string detailing state and value changes.'''
 	txt = 's a s`:\n'
-	txt += s + ' ' + a + ' ' + sPrime + '\n'
+	txt += s + ' ' + a + ' ' + sp + '\n'
 	txt += 'Q update:\n'
-	txt += str(qOld) + ' -> ' + str(qNew) + '\n'
+	txt += str(mdpOld) + ' -> ' + str(mdpNew) + '\n'
 	print(txt)
 
 def process(actions):
-	''' Process the actions in actions, updating a q qTable along the way.'''
-	q = QLearn(START_STATE, ALPHA, GAMMA, TRANSITIONS)
+	''' Perform the given actions with a regular q update. '''
+	mdp = MDP(START_STATE, ALPHA, GAMMA, TRANSITIONS)
 	s = START_STATE
 	print('-- Begin --\n')	
 	for a in actions:	
-		_, sPrime = TRANSITIONS[s][a]
-		qOld = q.qTable[s][a]
-		q.update(s, a, True)
-		qNew = q.qTable[s][a]
-		display(s, a, sPrime, qOld, qNew)
-		s = sPrime
+		oldQ = mdp.q[s][a]
+		newQ = mdp.regularUpdate(s, a)
+		mdp.updateQ(s, a, newQ)
+		mdp.changeState(s, a)
+		sp = mdp.state
+		display(s, a, sp, oldQ, newQ)
+		s = sp
+	print(mdp.q)
 	print('\n')	
-    
-def explore(steps):
-	''' Process the actions in actions, updating a q qTable along the way.'''
-	q = QLearn(START_STATE, ALPHA, GAMMA, TRANSITIONS)
+
+def explore(k):
+	''' Perform k iterations of the modified q update. '''
+	mdp = MDP(START_STATE, ALPHA, GAMMA, TRANSITIONS)
 	s = START_STATE
-	print('-- Begin Explore --\n')	
-	for i in range(steps):
-		a = q.nextAction(s)
-		_, sPrime = TRANSITIONS[s][a]
-		qOld = q.qTable[s][a]
-		q.update(s, a, False)
-		qNew = q.qTable[s][a]
-		display(s, a, sPrime, qOld, qNew)
-		s = sPrime
+	print('-- Begin Explore --\n')
+	for i in range(k):
+		a = mdp.nextAction(s)
+		oldQ = mdp.q[s][a]
+		newQ = mdp.modifiedUpdate(s, a)
+		mdp.updateQ(s, a, newQ)
+		mdp.incrementVisit(s, a)
+		mdp.changeState(s, a)
+		sp = mdp.state
+		display(s, a, sp, oldQ, newQ)
+		s = sp
+	print(mdp.q)
+	print(mdp.n)
 	print('\n')
-        
-    
+
+START_STATE = 'A'
+ALPHA = 0.5
+GAMMA = 1
+
 TRANSITIONS = {'A': {'E': (-1, 'B'), 'S': (1, 'D')},
     'B': {'E': (-1, 'C'), 'S': (-1, 'K'), 'W': (-1, 'A')},
 	'C': {'S': (-1, 'F'), 'W': (-1, 'B')},
@@ -109,20 +126,15 @@ TRANSITIONS = {'A': {'E': (-1, 'B'), 'S': (1, 'D')},
 	'H': {'E': (-10, 'I'), 'W': (5, 'G'), 'N': (-1, 'K')}, 
 	'I': {'W': (5, 'H'), 'N': (-1, 'F')}}
 
-ALPHA = 0.5
-GAMMA = 1
-
 A = ['E', 'S', 'W', 'N', 'E', 'S', 'W', 'N']
 B = ['E', 'E', 'W', 'S', 'E', 'N', 'W', 'W']
 X = ['E', 'E', 'S', 'S', 'W', 'E', 'W', 'W', 'N', 'E', 'W', 'E', 'E', 'S','W', 'E']
 SECTIONS = [A, B, X]
 
-EXPLORE_SECTIONS = [8, 16]
-
-START_STATE = 'A'
+C_AND_D = [8, 16]
 
 for actions in SECTIONS:
 	process(actions)	
 
-for e in EXPLORE_SECTIONS:
-    explore(e)
+for k in C_AND_D:
+    explore(k)
