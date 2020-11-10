@@ -43,6 +43,8 @@ class MDP:
     
 	def modifiedUpdate(self, s, a):
 		''' Find the utility of performing action a from state s with an explore function. '''
+		if s == 'Z':
+			return
 		r, sp = self.transitions[s][a]
 		f = lambda u, n: u + (1 / (n + 1))
 		maxF = float('-inf')
@@ -139,10 +141,10 @@ B = ['E', 'E', 'W', 'S', 'E', 'N', 'W', 'W']
 X = ['E', 'E', 'S', 'S', 'W', 'E', 'W', 'W', 'N', 'E', 'W', 'E', 'E', 'S','W', 'E']
 SECTIONS = [A, B, X]
 
-C_AND_D = [8, 16]
+C_AND_X = [8, 16]
 
 for actions in SECTIONS:
 	process(actions)	
 
-for k in C_AND_D:
+for k in C_AND_X:
     explore(k)
