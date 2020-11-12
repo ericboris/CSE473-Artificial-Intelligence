@@ -92,7 +92,7 @@ def handle_transition(action, new_state, r):
 	transition.'''
 	global PREVIOUS_STATE, LAST_ACTION, Q_VALUES
 
-	# Let alpha represent the learning rate to be applied in the utility update.
+	# Let alpha represent the learning rate to be applied by the utility update.
 	alpha = (1/ TIME) if CUSTOM_ALPHA else ALPHA
 
 	# Let maxQ be the maximum utility of new_state
@@ -156,7 +156,7 @@ def choose_next_action(s, r, terminated=False):
 	if is_valid_goal_state(s):
 		print("It's a goal state; return the Exit action.")
 		some_action = 'Exit'
-	elif s==Terminal_state:
+	elif s == Terminal_state or terminated:
 		print("It's not a goal state. But if it's the special Terminal state, return None.")
 		some_action = None
 	# Every other state should return the next action.
@@ -164,19 +164,28 @@ def choose_next_action(s, r, terminated=False):
 		print("it's neither a goal nor the Terminal state, so return some ordinary action.")
 
 		# Let epsilon represent the explore/exploit probability 
-		# to be used by random action
+		# to be used by random action.
 		epsilon = sqrt(1 / TIME) if CUSTOM_EPSILON else EPSILON
 
 		# Let valid actions be the list of all possible actions
-		# sorted to facilitate determining optimal actions.
 		valid_actions = ACTIONS[:]
+		
+		# excluding the 'Exit' action for non-goal states
+		# since we assign 'Exit' manually to goal states
+		# and don't want it as an option otherwise
+		try:
+			valid_actions.remove('Exit')
+		except:
+			pass		
+		
+		# and sorted by descending utility to facilitate determining optimal actions.
 		valid_actions.sort(key=lambda a : Q_VALUES[(s, a)], reverse=True)
 	
 		# Let optimal actions be the list of optimal actions to take from state s.
 		# Since valid actions is sorted by descending, any optimal actions will
 		# equal the first value in valid actions.	
 		optimal_actions = [a for a in valid_actions if Q_VALUES[(s, a)] == Q_VALUES[(s, valid_actions[0])]]
-	
+		
 		# Get the next action using epsilon greedy.
 		some_action = rand_action(optimal_actions, epsilon, valid_actions)
 
@@ -197,7 +206,16 @@ def extract_policy(S, A):
 	'''
 	global Policy
 	Policy = {}
+
 	actions = A[:]
+
+	# Remove 'Exit' as an option from actions since we'll
+	# manually assign 'Exit' to goal states and don't want
+	# to include it as an option otherwise.
+	try:
+		actions.remove('Exit')	
+	except:
+		pass
 	
 	for s in S:
 		# Goal states should follow the Exit policy.
