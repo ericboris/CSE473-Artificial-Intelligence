@@ -103,13 +103,14 @@ def extract_policy(S, A):
 	extract a policy.  Ties between actions having the same (s, a) value
 	can be broken arbitrarily.
 	'''
-	global Policy
+	global Policy, Q_Values_Dict
 	Policy = {}
 
-	q = return_Q_values(S, A)
-	
+	actions = A[:]
+
 	for s in S:
-		Policy[s] = max([q[(s, a)] for a in A])
+		actions.sort(key=lambda a : Q_Values_Dict[(s, a)], reverse=True)
+		Policy[s] = actions[0]
 
 	return Policy
 
