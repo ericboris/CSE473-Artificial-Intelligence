@@ -154,18 +154,14 @@ def choose_next_action(s, r, terminated=False):
 
 	# Goal states should always return the Exit action and terminal states should return None.
 	if is_valid_goal_state(s):
-		print("It's a goal state; return the Exit action.")
 		some_action = 'Exit'
 	elif s == Terminal_state or terminated:
-		print("It's not a goal state. But if it's the special Terminal state, return None.")
 		some_action = None
 	# Every other state should return the next action.
 	else:
-		print("it's neither a goal nor the Terminal state, so return some ordinary action.")
-
 		# Let epsilon represent the explore/exploit probability 
 		# to be used by random action.
-		epsilon = sqrt(1 / TIME) if CUSTOM_EPSILON else EPSILON
+		epsilon = (1 / TIME) ** 0.5 if CUSTOM_EPSILON else EPSILON
 
 		# Let valid actions be the list of all possible actions
 		valid_actions = ACTIONS[:]
@@ -189,9 +185,11 @@ def choose_next_action(s, r, terminated=False):
 		# Get the next action using epsilon greedy.
 		some_action = rand_action(optimal_actions, epsilon, valid_actions)
 
-	# Update global variables
+		# Only increment time if continuing to another action. 
+		TIME += 1  # You should not change this variable for autograding purpose
+	
+	# Move to the next action.
 	LAST_ACTION = some_action  # remember this for next time
-	TIME += 1  # You should not change this variable for autograding purpose
 
 	return some_action
 
