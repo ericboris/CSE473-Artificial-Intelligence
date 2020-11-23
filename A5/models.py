@@ -55,7 +55,7 @@ class PerceptronModel(object):
 		trained = False
 
 		# Iterate over the dataset until the weights converge.
-		while not is_trained:
+		while not trained:
 			trained = True
 
 			# Let x be the features and let y be the expected training result.
