@@ -1,6 +1,4 @@
 import nn
-# TODO remove
-import pdb
 
 
 class PerceptronModel(object):
