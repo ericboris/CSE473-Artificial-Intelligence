@@ -220,15 +220,16 @@ class DigitClassificationModel(object):
 	def __init__(self):
 		# Let the following represent the dimensionalities of the respective layers.
 		layer_0 = 784
-		layer_1 = 16
-		layer_2 = 16	
-		layer_3 = 16
+		layer_1 = 392
+		layer_2 = 196	
+		layer_3 = 98
 		layer_4 = 10
 		
 		# Let the following serve as controls for tuning the model.
-		self.batch_size = 1
-		self.learning_rate = -0.06
-		self.maximum_loss = 0.02
+		self.batch_size = 50
+		self.learning_rate = -0.5
+		self.minimum_accuracy = 0.98
+		self.decay = 0.5
 
 		# Let each wi represent a (n x m) layer of weights in the network
 		# where n is the dimensionality of the previous layer and
@@ -332,17 +333,20 @@ class DigitClassificationModel(object):
 			for x, y in dataset.iterate_once(self.batch_size):
 				# Compute the square loss from the current model's predictions.
 				loss = self.get_loss(x, y)
-				
-				# Continue training if the model poorly predicts a test case.
-				if loss.item() > self.maximum_loss:
-					trained = False	
-				
-					# Compute the gradients.
-					gradients = nn.gradients(loss, parameters)
+			
+				# Compute the gradients.
+				gradients = nn.gradients(loss, parameters)
 
-					# Update each of the weights and biases.				
-					for i, p in enumerate(parameters):
-						p.update(gradients[i], self.learning_rate)
+				# Update each of the weights and biases.				
+				for i, p in enumerate(parameters):
+					p.update(gradients[i], self.learning_rate)
+
+			# Reduce the learning rate to avoid over-stepping convergence.
+			self.learning_rate *= self.decay
+
+			# Continue training if the model accuracy is below the minimum threshold. 
+			if dataset.get_validation_accuracy() < self.minimum_accuracy:
+				trained = False
 
 
 class LanguageIDModel(object):
