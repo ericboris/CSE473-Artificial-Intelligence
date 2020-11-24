@@ -82,14 +82,14 @@ class RegressionModel(object):
 	def __init__(self):
 		# Let the following represent the dimensionalities of the respective layers.
 		layer_0 = 1
-		layer_1 = 400
-		layer_2 = 400	
-		layer_3 = 400
+		layer_1 = 20
+		layer_2 = 30
+		layer_3 = 20
 		layer_4 = 1	
 		
 		# Let the following serve as controls for tuning the model.
-		self.batch_size = 1
-		self.learning_rate = -0.06
+		self.batch_size = 50
+		self.learning_rate = -0.2
 		self.maximum_loss = 0.02
 
 		# Let each wi represent a (n x m) layer of weights in the network
@@ -192,7 +192,7 @@ class RegressionModel(object):
 				loss = self.get_loss(x, y)
 				
 				# Continue training if the model poorly predicts a test case.
-				if loss.item() > self.maximum_loss:
+				if loss.item() >= self.maximum_loss:
 					trained = False	
 				
 					# Compute the gradients.
@@ -218,9 +218,37 @@ class DigitClassificationModel(object):
 	"""
 
 	def __init__(self):
-		# Initialize your model parameters here
-		"*** YOUR CODE HERE ***"
-		## TODO Q3
+		# Let the following represent the dimensionalities of the respective layers.
+		layer_0 = 784
+		layer_1 = 16
+		layer_2 = 16	
+		layer_3 = 16
+		layer_4 = 10
+		
+		# Let the following serve as controls for tuning the model.
+		self.batch_size = 1
+		self.learning_rate = -0.06
+		self.maximum_loss = 0.02
+
+		# Let each wi represent a (n x m) layer of weights in the network
+		# where n is the dimensionality of the previous layer and
+		# where m is the dimensionality of the current layer.
+		w1 = nn.Parameter(layer_0, layer_1)
+		w2 = nn.Parameter(layer_1, layer_2)
+		w3 = nn.Parameter(layer_2, layer_3)
+		w4 = nn.Parameter(layer_3, layer_4)
+
+		# Let each bi represent a (1 x m) layer of biases in the network
+		# such that for each i in bi is associated with a hidden layer wi and
+		# such that m is the size of the hidden layer.
+		b1 = nn.Parameter(1, layer_1)
+		b2 = nn.Parameter(1, layer_2)
+		b3 = nn.Parameter(1, layer_3)
+		b4 = nn.Parameter(1, layer_4)
+
+		# Let the following hold each layer's weights and biases as tuple pairs.
+		self.weights_and_biases = [(w1, b1), (w2, b2), (w3, b3), (w4, b4)]
+
 
 	def run(self, x):
 		"""
@@ -236,8 +264,33 @@ class DigitClassificationModel(object):
 			A node with shape (batch_size x 10) containing predicted scores
 				(also called logits)
 		"""
-		"*** YOUR CODE HERE ***"
-		## TODO Q3
+		# Return the predicted value y = f(X).
+
+		# Given a starting activation layer X, if X = A_0 and 
+		# if activation layer A_i+1 = relu(A_i * W_i + B_i) where i = [0, n-1).
+		# Then the following computes the function f(X) = A_n-1 * W_n + B_n.
+		i = 0
+		n = len(self.weights_and_biases)
+		a = x
+
+		# Compute A_i+1 = relu(A_i * W_i + B_i) while i < n-1.
+		while i < n - 1:
+			w, b = self.weights_and_biases[i]
+			a_cross_w = nn.matmul(a, w)
+			a_cross_w_plus_b = nn.add_bias(a_cross_w, b)
+			a = nn.relu(a_cross_w_plus_b)
+			i += 1
+		
+		# Compute f(X) = A_n-1 * W_n + B_n.
+		w, b = self.weights_and_biases[i]
+		a_cross_w = nn.matmul(a, w)
+		a_cross_w_plus_b = nn.add_bias(a_cross_w, b)
+	
+		# The last term represents the predicted y value. 
+		predicted_y = a_cross_w_plus_b
+
+		return predicted_y 
+
 
 	def get_loss(self, x, y):
 		"""
@@ -252,15 +305,45 @@ class DigitClassificationModel(object):
 			y: a node with shape (batch_size x 10)
 		Returns: a loss node
 		"""
-		"*** YOUR CODE HERE ***"
-		## TODO Q3
+		# Let the following compute the square loss between the
+		# predicted outputs given x and the expected outputs given x
+		predicted_y = self.run(x)
+		loss = nn.softmax_loss(predicted_y, y)
+	
+		# and return the result.
+		return loss
+
 
 	def train(self, dataset):
 		"""
 		Trains the model.
 		"""
-		"*** YOUR CODE HERE ***"
-		## TODO Q3
+		# Let trained be a flag representing whether the weights have converged.
+		trained = False
+
+		# Let parameters be a flat list of the weights and biases, i.e.
+		# let parameters = [w1, b1, w2, b2, ..., wn, bn]
+		parameters = [p for pair in self.weights_and_biases for p in pair]
+
+		# Iterate over the dataset until the weights converge.
+		while not trained:
+			trained = True
+			
+			for x, y in dataset.iterate_once(self.batch_size):
+				# Compute the square loss from the current model's predictions.
+				loss = self.get_loss(x, y)
+				
+				# Continue training if the model poorly predicts a test case.
+				if loss.item() > self.maximum_loss:
+					trained = False	
+				
+					# Compute the gradients.
+					gradients = nn.gradients(loss, parameters)
+
+					# Update each of the weights and biases.				
+					for i, p in enumerate(parameters):
+						p.update(gradients[i], self.learning_rate)
+
 
 class LanguageIDModel(object):
 	"""
