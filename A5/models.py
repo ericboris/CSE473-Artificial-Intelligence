@@ -1,5 +1,6 @@
 import nn
 
+
 class PerceptronModel(object):
 	def __init__(self, dimensions):
 		"""
@@ -120,13 +121,6 @@ class RegressionModel(object):
 		Returns:
 			A node with shape (batch_size x 1) containing predicted y-values
 		"""
-		'''
-		x_cross_w1 = nn.matmul(x, self.w1)
-		x_cross_w1_plus_b1 = nn.add_bias(x_cross_w1, self.b1)
-		relu = nn.relu(x_cross_w1_plus_b1)
-		relu_cross_w2 = nn.matmul(relu, self.w2)
-		relu_cross_w2_plus_b2 = nn.add_bias(relu_cross_w2, self.b2)
-		'''
 		# Return the predicted value y = f(X).
 
 		# Given a starting activation layer X, if X = A_0 and 
@@ -202,6 +196,7 @@ class RegressionModel(object):
 					for i, p in enumerate(parameters):
 						p.update(gradients[i], self.learning_rate)
 
+
 class DigitClassificationModel(object):
 	"""
 	A model for handwritten digit classification using the MNIST dataset.
@@ -249,7 +244,6 @@ class DigitClassificationModel(object):
 
 		# Let the following hold each layer's weights and biases as tuple pairs.
 		self.weights_and_biases = [(w1, b1), (w2, b2), (w3, b3), (w4, b4)]
-
 
 	def run(self, x):
 		"""
@@ -369,46 +363,32 @@ class LanguageIDModel(object):
 		# Let the following serve as controls for tuning the model.
 		self.batch_size = 50
 		self.learning_rate = -0.5
-		self.minimum_accuracy = 0.83
+		self.minimum_accuracy = 0.86
 		self.decay = 0.5
 
 		# Let the following represent the dimensionalities of the respective layers.
-		layer_0 = 47
-		layer_1 = 300
-		layer_2 = 300	
-		layer_3 = 5
+		layer_input = self.num_chars
+		layer_hidden = 235
+		layer_output = len(self.languages)
 		
 		# Let each wi represent a (n x m) layer of weights in the network
 		# where n is the dimensionality of the previous layer and
 		# where m is the dimensionality of the current layer.
-		'''
-		w1 = nn.Parameter(layer_0, layer_1)
-		w2 = nn.Parameter(layer_1, layer_2)
-		w3 = nn.Parameter(layer_2, layer_3)
-		w4 = nn.Parameter(layer_3, layer_4)
+		self.w_input = nn.Parameter(layer_input, layer_hidden)
+		self.w_hidden = nn.Parameter(layer_hidden, layer_hidden)
+		self.w_output = nn.Parameter(layer_hidden, layer_output)
 
 		# Let each bi represent a (1 x m) layer of biases in the network
 		# such that for each i in bi is associated with a hidden layer wi and
 		# such that m is the size of the hidden layer.
-		b1 = nn.Parameter(1, layer_1)
-		b2 = nn.Parameter(1, layer_2)
-		b3 = nn.Parameter(1, layer_3)
-		b4 = nn.Parameter(1, layer_4)
-		'''
-
-		# ------------------ #
-
-		self.w = nn.Parameter(layer_0, layer_1)
-		self.w_hidden = nn.Parameter(layer_1, layer_2)
-		self.w_last = nn.Parameter(layer_2, layer_3)
-
-		self.b = nn.Parameter(1, layer_1)
-		self.b_hidden = nn.Parameter(1, layer_2)
-		self.b_last = nn.Parameter(1, layer_3)
-
+		self.b_input = nn.Parameter(1, layer_hidden)
+		self.b_hidden = nn.Parameter(1, layer_hidden)
+		self.b_output = nn.Parameter(1, layer_output)
 
 		# Let the following hold each layer's weights and biases as tuple pairs.
-		self.weights_and_biases = [(self.w, self.b), (self.w_hidden, self.b_hidden), (self.w_last, self.b_last)]
+		self.weights_and_biases = [(self.w_input, self.b_input), 
+								   (self.w_hidden, self.b_hidden), 
+								   (self.w_output, self.b_output)]
 
 	def run(self, xs):
 		"""
@@ -419,44 +399,35 @@ class LanguageIDModel(object):
 
 		Here `xs` will be a list of length L. Each element of `xs` will be a
 		node with shape (batch_size x self.num_chars), where every row in the
-		array is a one-hot vector encoding of a character. For example, if we
-		have a batch of 8 three-letter words where the last word is "cat", then
-		xs[1] will be a node that contains a 1 at position (7, 0). Here the
-		index 7 reflects the fact that "cat" is the last word in the batch, and
-		the index 0 reflects the fact that the letter "a" is the inital (0th)
-		letter of our combined alphabet for this task.
+		array is a one-hot vector encoding of a character. For example: 
 
 		Given:
+			xs = [[batch_size X num_chars] * L]
+			batch_size	- The number of words in the input matrices
+			num_chars	- A one-hot encoding of the possible letters
+			L			- The number of letters in the words in the batch
+		If:
 			batch_size = 8
 			num_chars = 47
 			L = 3
-		Then:
-			xs = [[8 X 47], [8 X 47], [8 X 47]]
-		If:
 			"cat" is the last word in the batch
 		Then:
-					|     two rows above     | 
-			xs[0] = | 0, 0, 0, 0, 0, 0, 0, 1 |
- 					| forty four rows below  |
-
-			-> The first letter (xs[0]) of the last word ((7, 3)) in xs is "c"
-
-					|    zero rows above     |
-			xs[1] = | 0, 0, 0, 0, 0, 0, 0, 1 | 
-					|  forty six rows below  |
-
-			-> The second letter (xs[1]) of the last word ((7, 0)) in xs is "a"
-
-					|  nineteen rows above   |
-			xs[2] = | 0, 0, 0, 0, 0, 0, 0, 1 | 
-					|twenty seven rows below |
-
-			-> The third letter (xs[2]) of the last word ((7, 20)) in xs is "t"
-
-			Note that any of the above 0 could also be 
-			1 if the jth letter of the ith word in xs
-			was also a "c", "a", or "t" respectively.
-
+			xs[0] has a 1 at postition (7, 2) 
+				i.e. The first letter, xs[0]
+				of the last word in the batch, 7 
+				starts with a "c", 2 
+				since "c" is the third letter in the alphabet. 
+			xs[1] has a 1 at position (7, 0)
+				i.e. The second letter, xs[1]
+				of the last word in the batch, 7
+				has an "a" as it's middle letter, 0
+				since "a" is the first letter of the alphabet.
+			xs[2] has a 1 at position (7, 19)
+				ie. the third letter, xs[2]
+				of the last word in the batch, 7
+				has a "t" as it's last letter, 19
+				since "t" is the nineteenth letter of the alphabet.
+					
 		Your model should use a Recurrent Neural Network to summarize the list
 		`xs` into a single node of shape (batch_size x hidden_size), for your
 		choice of hidden_size. It should then calculate a node of shape
@@ -472,60 +443,31 @@ class LanguageIDModel(object):
 		"""
 		# Return the predicted value y = f(X).
 
-		# Given a starting activation layer X, if X = A_0 and 
-		# if activation layer A_i+1 = relu(A_i * W_i + B_i) where i = [0, n-1).
-		# Then the following computes the function f(X) = A_n-1 * W_n + B_n.
-		'''
-		i = 0
-		n = len(self.weights_and_biases)
-		a = xs
-
-		# Compute A_i+1 = relu(A_i * W_i + B_i) while i < n-1.
-		while i < n - 1:
-			w, b = self.weights_and_biases[i]
-			a_cross_w = nn.matmul(a, w)
-			a_cross_w_plus_b = nn.add_bias(a_cross_w, b)
-			a = nn.relu(a_cross_w_plus_b)
-			i += 1
+		# Given an activation layer x representing the first letters in the words
+		# a weights layer W and a bias b
+		# then the base case y_0 of the recurrence is given by
+		# y_0 = relu(x * W + b).
+		x_cross_w = nn.matmul(xs[0], self.w_input)
+		x_cross_w_plus_b = nn.add_bias(x_cross_w, self.b_input)
+		y = nn.relu(x_cross_w_plus_b)
 		
-		# Compute f(X) = A_n-1 * W_n + B_n.
-		w, b = self.weights_and_biases[i]
-		a_cross_w = nn.matmul(a, w)
-		a_cross_w_plus_b = nn.add_bias(a_cross_w, b)
-	
-		# The last term represents the predicted y value. 
-		predicted_y = a_cross_w_plus_b
-
-		return predicted_y 
-		'''
-		#------------------------------------------#
-
-		# f_0(x) = z_0 = relu(x * W + b)
-		x_0 = xs[0]
-		x_cross_w = nn.matmul(x_0, self.w)
-		x_cross_w_plus_b = nn.add_bias(x_cross_w, self.b)
-		z_0 = nn.relu(x_cross_w_plus_b)
-
-		# f_i(x) = z_i = relu(x * W + z_i-1 * W_hidden + b_hidden) for i in range [1, n]
-		z_i_minus_1 = z_0
-		z_i = z_0
+		# The remaining iterations of the recurrence for y_i for i in range [1, n]
+		# where n is the length of the input words, n = L
+		# are given by y_i = relu((x_i * W) + (y_i-1 * W_hidden) + b_hidden)
+		# where x_i represents the remaining letters in the words. 
 		n = len(xs)
-		i = 1
-		while i < n:
-			x_i = xs[i]
-			x_cross_w = nn.matmul(x_i, self.w)
-			z_i_minus_1_cross_w = nn.matmul(z_i_minus_1, self.w_hidden)
-			z_sum_1 = nn.add(x_cross_w, z_i_minus_1_cross_w)
-			z_sum = nn.add_bias(z_sum_1, self.b_hidden)
-			z_i = nn.relu(z_sum)
-			z_i_minus_1 = z_i
-			i += 1
+		for i in range(1, n):
+			x_cross_w = nn.matmul(xs[i], self.w_input)
+			y_cross_w = nn.matmul(y, self.w_hidden)
+			y = nn.relu(nn.add_bias(nn.add(x_cross_w, y_cross_w), self.b_hidden))
 
-		# f_n(x) = z_n = relu(z_n-1 * W_last_layer + b_last_layer) where last_layer dim = 5
-		z_i_cross_w = nn.matmul(z_i, self.w_last)
-		z_i_cross_w_plus_b = nn.add_bias(z_i_cross_w, self.b_last)
+		# Map the predictions made over the letters onto a language prediction.  
+		# y = relu(y_n * W_last_layer + b_last_layer)
+		y_cross_w = nn.matmul(y, self.w_output)
+		y_cross_w_plus_b = nn.add_bias(y_cross_w, self.b_output)
 
-		predicted_y = z_i_cross_w_plus_b
+		# The previous term represents the predicted value. 
+		predicted_y = y_cross_w_plus_b
 
 		return predicted_y
 
